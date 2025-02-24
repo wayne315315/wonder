@@ -1,0 +1,1437 @@
+{
+    "Lumbar Yard": {
+        "name": "Lumbar Yard",
+        "color": "brown",
+        "cost": {
+            "coin": 0
+        },
+        "func": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Stone Pit":{
+        "name": "Stone Pit",
+        "color": "brown",
+        "cost": {
+            "coin": 0
+        },
+        "func": {
+            "wood": 0,
+            "stone": 1,
+            "brick": 0,
+            "ore": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Clay Pool":{
+        "name": "Clay Pool",
+        "color": "brown",
+        "cost": {
+            "coin": 0
+        },
+        "func": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 1,
+            "ore": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Ore Vein":{
+        "name": "Ore Vein",
+        "color": "brown",
+        "cost": {
+            "coin": 0
+        },
+        "func": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 1
+        },
+        "prev": null,
+        "next": null
+    },
+    "Tree Farm":{
+        "name": "Tree Farm",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 0.5,
+            "stone": 0,
+            "brick": 0.5,
+            "ore": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Excavation":{
+        "name": "Excavation",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 0,
+            "stone": 0.5,
+            "brick": 0.5,
+            "ore": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Clay Pit":{
+        "name": "Clay Pit",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0.5,
+            "ore": 0.5
+        },
+        "prev": null,
+        "next": null
+    },
+    "Timber Yard":{
+        "name": "Timber Yard",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 0.5,
+            "stone": 0.5,
+            "brick": 0,
+            "ore": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Forest Cave":{
+        "name": "Forest Cave",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 0.5,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0.5
+        },
+        "prev": null,
+        "next": null
+    },
+    "Mine":{
+        "name": "Mine",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 0,
+            "stone": 0.5,
+            "brick": 0,
+            "ore": 0.5
+        },
+        "prev": null,
+        "next": null
+    },
+    "Sawmill": {
+        "name": "Sawmill",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 2,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Quarry": {
+        "name": "Quarry",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 0,
+            "stone": 2,
+            "brick": 0,
+            "ore": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Brickyard": {
+        "name": "Brickyard",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 2,
+            "ore": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Foundry": {
+        "name": "Foundry",
+        "color": "brown",
+        "cost": {
+            "coin": 1
+        },
+        "func": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 2
+        },
+        "prev": null,
+        "next": null
+    },
+    "Glassworks":{
+        "name": "Glassworks",
+        "color": "grey",
+        "cost": {
+            "coin": 0
+        },
+        "func": {
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Press":{
+        "name": "Press",
+        "color": "grey",
+        "cost": {
+            "coin": 0
+        },
+        "func": {
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 0
+        },
+        "prev": null,
+        "next": null
+    },
+    "Loom":{
+        "name": "Loom",
+        "color": "grey",
+        "cost": {
+            "coin": 0
+        },
+        "func": {
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 1
+        },
+        "prev": null,
+        "next": null
+    },
+    "Pawnshop":{
+        "name": "Pawnshop",
+        "color": "blue",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 3
+        },
+        "prev": null,
+        "next": ["Statue"]
+    },
+    "Baths":{
+        "name": "Baths",
+        "color": "blue",
+        "cost": {
+            "wood": 0,
+            "stone": 1,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 3
+        },
+        "prev": null,
+        "next": ["Aqueduct"]
+    },
+    "Altar":{
+        "name": "Altar",
+        "color": "blue",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 3
+        },
+        "prev": null,
+        "next": ["Pantheon"]
+    },
+    "Theater":{
+        "name": "Theater",
+        "color": "blue",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 3
+        },
+        "prev": null,
+        "next": ["Gardens"]
+    },
+    "Statue":{
+        "name": "Statue",
+        "color": "blue",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 0,
+            "ore": 2,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 4
+        },
+        "prev": ["Pawnshop"],
+        "next": null
+    },
+    "Aqueduct":{
+        "name": "Aqueduct",
+        "color": "blue",
+        "cost": {
+            "wood": 0,
+            "stone": 3,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 5
+        },
+        "prev": ["Baths"],
+        "next": null
+    },
+    "Temple":{
+        "name": "Temple",
+        "color": "blue",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 1,
+            "ore": 0,
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 4
+        },
+        "prev": null,
+        "next": null
+    },
+    "Courthouse":{
+        "name": "Courthouse",
+        "color": "blue",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 2,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 1
+        },
+        "func": {
+            "score": 4
+        },
+        "prev": ["Scriptorium"],
+        "next": null
+    },
+    "Pantheon":{
+        "name": "Pantheon",
+        "color": "blue",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 2,
+            "ore": 1,
+            "glass": 1,
+            "papyrus": 1,
+            "cloth": 1
+        },
+        "func": {
+            "score": 7
+        },
+        "prev": ["Altar"],
+        "next": null
+    },
+    "Gardens":{
+        "name": "Gardens",
+        "color": "blue",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 2,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 5
+        },
+        "prev": ["Theater"],
+        "next": null
+    },
+    "Town Hall":{
+        "name": "Town Hall",
+        "color": "blue",
+        "cost": {
+            "wood": 0,
+            "stone": 2,
+            "brick": 0,
+            "ore": 1,
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 6
+        },
+        "prev": null,
+        "next": null
+    },
+    "Palace":{
+        "name": "Palace",
+        "color": "blue",
+        "cost": {
+            "wood": 1,
+            "stone": 1,
+            "brick": 1,
+            "ore": 1,
+            "glass": 1,
+            "papyrus": 1,
+            "cloth": 1
+        },
+        "func": {
+            "score": 8
+        },
+        "prev": null,
+        "next": null
+    },
+    "Senate":{
+        "name": "Senate",
+        "color": "blue",
+        "cost": {
+            "wood": 2,
+            "stone": 1,
+            "brick": 0,
+            "ore": 1,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": 6
+        },
+        "prev": ["Library"],
+        "next": null
+    },
+    "Stockade":{
+        "name": "Stockade",
+        "color": "red",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 1
+        },
+        "prev": null,
+        "next": null
+    },
+    "Barracks":{
+        "name": "Barracks",
+        "color": "red",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 1,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 1
+        },
+        "prev": null,
+        "next": null
+    },
+    "Guard Tower":{
+        "name": "Guard Tower",
+        "color": "red",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 1,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 1
+        },
+        "prev": null,
+        "next": null
+    },
+    "Stables":{
+        "name": "Stables",
+        "color": "red",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 1,
+            "ore": 1,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 2
+        },
+        "prev": ["Apothecary"],
+        "next": null
+    },
+    "Archery Range":{
+        "name": "Archery Range",
+        "color": "red",
+        "cost": {
+            "wood": 2,
+            "stone": 0,
+            "brick": 0,
+            "ore": 1,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 2
+        },
+        "prev": ["Workshop"],
+        "next": null
+    },
+    "Walls":{
+        "name": "Walls",
+        "color": "red",
+        "cost": {
+            "wood": 0,
+            "stone": 3,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 2
+        },
+        "prev": null,
+        "next": ["Fortifications"]
+    },
+    "Training Ground":{
+        "name": "Training Ground",
+        "color": "red",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 0,
+            "ore": 2,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 2
+        },
+        "prev": null,
+        "next": ["Circus"]
+    },
+    "Castrum":{
+        "name": "Castrum",
+        "color": "red",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 2,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 3
+        },
+        "prev": null,
+        "next": null
+    },
+    "Fortifications":{
+        "name": "Fortifications",
+        "color": "red",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 1,
+            "ore": 3,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 3
+        },
+        "prev": ["Walls"],
+        "next": null
+    },
+    "Circus":{
+        "name": "Circus",
+        "color": "red",
+        "cost": {
+            "wood": 0,
+            "stone": 3,
+            "brick": 0,
+            "ore": 1,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 3
+        },
+        "prev": ["Training Ground"],
+        "next": null
+    },
+    "Arsenal":{
+        "name": "Arsenal",
+        "color": "red",
+        "cost": {
+            "wood": 2,
+            "stone": 0,
+            "brick": 0,
+            "ore": 1,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 1
+        },
+        "func": {
+            "shield": 3
+        },
+        "prev": null,
+        "next": null
+    },
+    "Siege Workshop":{
+        "name": "Siege Workshop",
+        "color": "red",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 3,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "shield": 3
+        },
+        "prev": ["Laboratory"],
+        "next": null
+    },
+    "Apothecary":{
+        "name": "Apothecary",
+        "color": "green",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 1
+        },
+        "func": {
+            "compass": 1,
+            "tombstone": 0,
+            "wheel": 0
+        },
+        "prev": null,
+        "next": ["Stables", "Dispensary"]
+    },
+    "Workshop":{
+        "name": "Workshop",
+        "color": "green",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "compass": 0,
+            "tombstone": 0,
+            "wheel": 1
+        },
+        "prev": null,
+        "next": ["Laboratory", "Archery Range"]
+    },
+    "Scriptorium":{
+        "name": "Scriptorium",
+        "color": "green",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 0
+        },
+        "func": {
+            "compass": 0,
+            "tombstone": 1,
+            "wheel": 0
+        },
+        "prev": null,
+        "next": ["Courthouse", "Library"]
+    },
+    "Dispensary":{
+        "name": "Dispensary",
+        "color": "green",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 2,
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "compass": 1,
+            "tombstone": 0,
+            "wheel": 0
+        },
+        "prev": ["Apothecary"],
+        "next": ["Lodge", "Arena"]
+    },
+    "Laboratory":{
+        "name": "Laboratory",
+        "color": "green",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 2,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 0
+        },
+        "func": {
+            "compass": 0,
+            "tombstone": 0,
+            "wheel": 1
+        },
+        "prev": ["Workshop"],
+        "next": ["Observatory", "Siege Workshop"]
+    },
+    "Library":{
+        "name": "Library",
+        "color": "green",
+        "cost": {
+            "wood": 0,
+            "stone": 2,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 1
+        },
+        "func": {
+            "compass": 0,
+            "tombstone": 1,
+            "wheel": 0
+        },
+        "prev": ["Scriptorium"],
+        "next": ["Senate", "University"]
+    },
+    "School":{
+        "name": "School",
+        "color": "green",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 0
+        },
+        "func": {
+            "compass": 0,
+            "tombstone": 1,
+            "wheel": 0
+        },
+        "prev": null,
+        "next": ["Academy", "Study"]
+    },
+    "Lodge":{
+        "name": "Lodge",
+        "color": "green",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 2,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 1
+        },
+        "func": {
+            "compass": 1,
+            "tombstone": 0,
+            "wheel": 0
+        },
+        "prev": ["Dispensary"],
+        "next": null
+    },
+    "Academy":{
+        "name": "Academy",
+        "color": "green",
+        "cost": {
+            "wood": 0,
+            "stone": 3,
+            "brick": 0,
+            "ore": 0,
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "compass": 1,
+            "tombstone": 0,
+            "wheel": 0
+        },
+        "prev": ["School"],
+        "next": null
+    },
+    "Observatory":{
+        "name": "Observatory",
+        "color": "green",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 2,
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 1
+        },
+        "func": {
+            "compass": 0,
+            "tombstone": 0,
+            "wheel": 1
+        },
+        "prev": ["Laboratory"],
+        "next": null
+    },
+    "Study":{
+        "name": "Study",
+        "color": "green",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 1
+        },
+        "func": {
+            "compass": 0,
+            "tombstone": 0,
+            "wheel": 1
+        },
+        "prev": ["School"],
+        "next": null
+    },
+    "University":{
+        "name": "University",
+        "color": "green",
+        "cost": {
+            "wood": 2,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 1,
+            "papyrus": 1,
+            "cloth": 0
+        },
+        "func": {
+            "compass": 0,
+            "tombstone": 1,
+            "wheel": 0
+        },
+        "prev": ["Library"],
+        "next": null
+    },
+    "Tavern":{
+        "name": "Tavern",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": [null, null, 5],
+            "score": null,
+            "trade": null,
+            "rsc": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Marketplace":{
+        "name": "Marketplace",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": null,
+            "score": null,
+            "trade": [[1, -1], ["glass", "papyrus", "cloth"], 1],
+            "rsc": null
+        },
+        "prev": null,
+        "next": ["Caravansery"]
+    },
+    "East Trading Post":{
+        "name": "East Trading Post",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": null,
+            "score": null,
+            "trade": [[1], ["wood", "stone", "brick", "ore"], 1],
+            "rsc": null
+        },
+        "prev": null,
+        "next": ["Forum"]
+    },
+    "West Trading Post":{
+        "name": "West Trading Post",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": null,
+            "score": null,
+            "trade": [[-1], ["wood", "stone", "brick", "ore"], 1],
+            "rsc": null
+        },
+        "prev": null,
+        "next": ["Forum"]
+    },
+    "Caravansery":{
+        "name": "Caravansery",
+        "color": "yellow",
+        "cost": {
+            "wood": 2,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": null,
+            "score": null,
+            "trade": null,
+            "rsc": {
+                "wood": 0.25,
+                "stone": 0.25,
+                "brick": 0.25,
+                "ore": 0.25,
+                "glass": 0,
+                "papyrus": 0,
+                "cloth": 0
+            }
+        },
+        "prev": ["Marketplace"],
+        "next": ["Lighthouse"]
+    },
+    "Forum":{
+        "name": "Forum",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 2,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": null,
+            "score": null,
+            "trade": null,
+            "rsc": {
+                "wood": 0,
+                "stone": 0,
+                "brick": 0,
+                "ore": 0,
+                "glass": 0.33,
+                "papyrus": 0.33,
+                "cloth": 0.33
+            }
+        },
+        "prev": ["East Trading Post", "West Trading Post"],
+        "next": ["Haven"]
+    },
+    "Vineyard":{
+        "name": "Vineyard",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": [[1, -1, 0], "brown", 1],
+            "score": null,
+            "trade": null,
+            "rsc": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Bazaar":{
+        "name": "Bazaar",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": [[1, -1, 0], "grey", 2],
+            "score": null,
+            "trade": null,
+            "rsc": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Lighthouse":{
+        "name": "Lighthouse",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 1,
+            "brick": 0,
+            "ore": 0,
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": [[0], "yellow", 1],
+            "score": [[0], "yellow", 1],
+            "trade": null,
+            "rsc": null
+        },
+        "prev": ["Caravansery"],
+        "next": null
+    },
+    "Haven":{
+        "name": "Haven",
+        "color": "yellow",
+        "cost": {
+            "wood": 1,
+            "stone": 0,
+            "brick": 0,
+            "ore": 1,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 1
+        },
+        "func": {
+            "coin": [[0], "brown", 1],
+            "score": [[0], "brown", 1],
+            "trade": null,
+            "rsc": null
+        },
+        "prev": ["Forum"],
+        "next": null
+    },
+    "Chamber of Commerce":{
+        "name": "Chamber of Commerce",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 2,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 0
+        },
+        "func": {
+            "coin": [[0], "grey", 2],
+            "score": [[0], "grey", 2],
+            "trade": null,
+            "rsc": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Ludus":{
+        "name": "Ludus",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 1,
+            "brick": 0,
+            "ore": 1,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": [[0], "red", 3],
+            "score": [[0], "red", 1],
+            "trade": null,
+            "rsc": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Arena":{
+        "name": "Arena",
+        "color": "yellow",
+        "cost": {
+            "wood": 0,
+            "stone": 2,
+            "brick": 0,
+            "ore": 1,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "coin": [[0], "wonder", 3],
+            "score": [[0], "wonder", 1],
+            "trade": null,
+            "rsc": null
+        },
+        "prev": ["Dispensary"],
+        "next": null
+    },
+    "Workers Guild":{
+        "name": "Workers Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 1,
+            "stone": 1,
+            "brick": 1,
+            "ore": 2,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": [[1, -1], "brown", 1],
+            "symbols": null,
+            "others": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Craftsmens Guild":{
+        "name": "Craftsmens Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 0,
+            "stone": 2,
+            "brick": 0,
+            "ore": 2,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": [[1, -1], "grey", 2],
+            "symbols": null,
+            "others": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Magistrates Guild":{
+        "name": "Magistrates Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 3,
+            "stone": 1,
+            "brick": 0,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 1
+        },
+        "func": {
+            "score": [[1, -1], "blue", 1],
+            "symbols": null,
+            "others": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Traders Guild":{
+        "name": "Traders Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 1,
+            "papyrus": 1,
+            "cloth": 1
+        },
+        "func": {
+            "score": [[1, -1], "yellow", 1],
+            "symbols": null,
+            "others": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Builders Guild":{
+        "name": "Builders Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 0,
+            "stone": 3,
+            "brick": 2,
+            "ore": 0,
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": [[1, 0, -1], "wonder", 1],
+            "symbols": null,
+            "others": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Spies Guild":{
+        "name": "Spies Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 2,
+            "ore": 0,
+            "glass": 1,
+            "papyrus": 0,
+            "cloth": 0
+        },
+        "func": {
+            "score": [[1, -1], "red", 1],
+            "symbols": null,
+            "others": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Philosophers Guild":{
+        "name": "Philosophers Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 0,
+            "stone": 0,
+            "brick": 3,
+            "ore": 0,
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 1
+        },
+        "func": {
+            "score": [[1, -1], "green", 1],
+            "symbols": null,
+            "others": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Decorators Guild":{
+        "name": "Decorators Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 0,
+            "stone": 1,
+            "brick": 0,
+            "ore": 2,
+            "glass": 0,
+            "papyrus": 0,
+            "cloth": 1
+        },
+        "func": {
+            "score": null,
+            "symbols": null,
+            "others": [[0], "wonder", 7]
+        },
+        "prev": null,
+        "next": null
+    },
+    "Scientists Guild":{
+        "name": "Scientists Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 2,
+            "stone": 0,
+            "brick": 0,
+            "ore": 2,
+            "glass": 0,
+            "papyrus": 1,
+            "cloth": 0
+        },
+        "func": {
+            "score": null,
+            "symbols": {
+                "compass": 0.33,
+                "tombstone": 0.33,
+                "wheel": 0.33
+            },
+            "others": null
+        },
+        "prev": null,
+        "next": null
+    },
+    "Shipowners Guild":{
+        "name": "Shipowners Guild",
+        "color": "purple",
+        "cost": {
+            "wood": 3,
+            "stone": 0,
+            "brick": 0,
+            "ore": 0,
+            "glass": 1,
+            "papyrus": 1,
+            "cloth": 0
+        },
+        "func": {
+            "score": [[0], ["brown", "grey", "purple"], 1],
+            "symbols": null,
+            "others": null
+        },
+        "prev": null,
+        "next": null
+    }
+}
