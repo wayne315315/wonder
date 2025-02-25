@@ -1,0 +1,925 @@
+{
+    "Alexandria": {
+        "name": "Alexandria",
+        "rsc": "glass",
+        "wonders": {
+            "Day": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 2,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 2,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": {
+                            "wood": 0.25,
+                            "stone": 0.25,
+                            "brick": 0.25,
+                            "ore": 0.25,
+                            "glass": 0,
+                            "papyrus": 0,
+                            "cloth": 0
+                        },
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 1,
+                        "cloth": 1
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 7,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ],
+            "Night": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 2,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": {
+                            "wood": 0.25,
+                            "stone": 0.25,
+                            "brick": 0.25,
+                            "ore": 0.25,
+                            "glass": 0,
+                            "papyrus": 0,
+                            "cloth": 0
+                        },
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 3,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": {
+                            "wood": 0,
+                            "stone": 0,
+                            "brick": 0,
+                            "ore": 0,
+                            "glass": 0.33,
+                            "papyrus": 0.33,
+                            "cloth": 0.33
+                        },
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 4,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 7,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ]
+        }
+    },
+    "Babylon": {
+        "name": "Babylon",
+        "rsc": "wood",
+        "wonders": {
+            "Day": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 2,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 2,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 1
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": {
+                            "compass": 0.33,
+                            "tombstone": 0.33,
+                            "wheel": 0.33
+                        },
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 4,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 7,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ],
+            "Night": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 2,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": "seven"
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 3,
+                        "ore": 0,
+                        "glass": 1,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": {
+                            "compass": 0.33,
+                            "tombstone": 0.33,
+                            "wheel": 0.33
+                        },
+                        "others": null
+                    }
+                }
+            ]
+        }
+    },
+    "Éphesos": {
+        "name": "Éphesos",
+        "rsc": "papyrus",
+        "wonders": {
+            "Day": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 2,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 2,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": 9,
+                        "score": null,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 2,
+                        "glass": 1,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 7,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ],
+            "Night": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 2,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": 4,
+                        "score": 2,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 2,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": 4,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 2,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 1
+                    },
+                    "func": {
+                        "coin": 4,
+                        "score": 5,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ]
+        }
+    },
+    "Gizah": {
+        "name": "Gizah",
+        "rsc": "stone",
+        "wonders": {
+            "Day": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 2,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 2,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 1
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 5,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 4,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 7,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ],
+            "Night": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 2,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": 0,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 3,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 5,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 3,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 5,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 4,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 4,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 1,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 7,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ]
+        }
+    },
+    "Halikarnassos": {
+        "name": "Halikarnassos",
+        "rsc": "cloth",
+        "wonders": {
+            "Day": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 2,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 1,
+                        "papyrus": 1,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": "discard"
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 3,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 7,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ],
+            "Night": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 2,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 2,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": "discard"
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 1,
+                        "papyrus": 1,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 1,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": "discard"
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 3,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": "discard"
+                    }
+                }
+            ]
+        }
+    },
+    "Olympia": {
+        "name": "Olympia",
+        "rsc": "brick",
+        "wonders": {
+            "Day": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 2,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 2,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": "free color"
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 3,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 7,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ],
+            "Night": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 2,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 2,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": "free first"
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 3,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": "free last"
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 1,
+                        "papyrus": 1,
+                        "cloth": 1
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 5,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ]
+        }
+
+    },
+    "Rhódos": {
+        "name": "Rhódos",
+        "rsc": "ore",
+        "wonders": {
+            "Day": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 2,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 3,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": null,
+                        "rsc": null,
+                        "shield": 2,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 3,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 4,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": null,
+                        "score": 7,
+                        "rsc": null,
+                        "shield": null,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ],
+            "Night": [
+                {
+                    "stage": 1,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 3,
+                        "brick": 0,
+                        "ore": 0,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": 3,
+                        "score": 3,
+                        "rsc": null,
+                        "shield": 1,
+                        "symbols": null,
+                        "others": null
+                    }
+                },
+                {
+                    "stage": 2,
+                    "cost": {
+                        "wood": 0,
+                        "stone": 0,
+                        "brick": 0,
+                        "ore": 4,
+                        "glass": 0,
+                        "papyrus": 0,
+                        "cloth": 0
+                    },
+                    "func": {
+                        "coin": 4,
+                        "score": 4,
+                        "rsc": null,
+                        "shield": 1,
+                        "symbols": null,
+                        "others": null
+                    }
+                }
+            ]
+        }
+    }
+}
