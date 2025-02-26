@@ -6,145 +6,145 @@
             "coin": 0
         },
         "func": {
-            "wood": 1,
-            "stone": 0,
-            "brick": 0,
-            "ore": 0
+            "rsc": [
+                "wood",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Stone Pit":{
+    "Stone Pit": {
         "name": "Stone Pit",
         "color": "brown",
         "cost": {
             "coin": 0
         },
         "func": {
-            "wood": 0,
-            "stone": 1,
-            "brick": 0,
-            "ore": 0
+            "rsc": [
+                "stone",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Clay Pool":{
+    "Clay Pool": {
         "name": "Clay Pool",
         "color": "brown",
         "cost": {
             "coin": 0
         },
         "func": {
-            "wood": 0,
-            "stone": 0,
-            "brick": 1,
-            "ore": 0
+            "rsc": [
+                "brick",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Ore Vein":{
+    "Ore Vein": {
         "name": "Ore Vein",
         "color": "brown",
         "cost": {
             "coin": 0
         },
         "func": {
-            "wood": 0,
-            "stone": 0,
-            "brick": 0,
-            "ore": 1
+            "rsc": [
+                "ore",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Tree Farm":{
+    "Tree Farm": {
         "name": "Tree Farm",
         "color": "brown",
         "cost": {
             "coin": 1
         },
         "func": {
-            "wood": 0.5,
-            "stone": 0,
-            "brick": 0.5,
-            "ore": 0
+            "rsc": [
+                "wood|brick",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Excavation":{
+    "Excavation": {
         "name": "Excavation",
         "color": "brown",
         "cost": {
             "coin": 1
         },
         "func": {
-            "wood": 0,
-            "stone": 0.5,
-            "brick": 0.5,
-            "ore": 0
+            "rsc": [
+                "stone|brick",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Clay Pit":{
+    "Clay Pit": {
         "name": "Clay Pit",
         "color": "brown",
         "cost": {
             "coin": 1
         },
         "func": {
-            "wood": 0,
-            "stone": 0,
-            "brick": 0.5,
-            "ore": 0.5
+            "rsc": [
+                "brick|ore",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Timber Yard":{
+    "Timber Yard": {
         "name": "Timber Yard",
         "color": "brown",
         "cost": {
             "coin": 1
         },
         "func": {
-            "wood": 0.5,
-            "stone": 0.5,
-            "brick": 0,
-            "ore": 0
+            "rsc": [
+                "wood|stone",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Forest Cave":{
+    "Forest Cave": {
         "name": "Forest Cave",
         "color": "brown",
         "cost": {
             "coin": 1
         },
         "func": {
-            "wood": 0.5,
-            "stone": 0,
-            "brick": 0,
-            "ore": 0.5
+            "rsc": [
+                "wood|ore",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Mine":{
+    "Mine": {
         "name": "Mine",
         "color": "brown",
         "cost": {
             "coin": 1
         },
         "func": {
-            "wood": 0,
-            "stone": 0.5,
-            "brick": 0,
-            "ore": 0.5
+            "rsc": [
+                "stone|ore",
+                1
+            ]
         },
         "prev": null,
         "next": null
@@ -156,10 +156,10 @@
             "coin": 1
         },
         "func": {
-            "wood": 2,
-            "stone": 0,
-            "brick": 0,
-            "ore": 0
+            "rsc": [
+                "wood",
+                2
+            ]
         },
         "prev": null,
         "next": null
@@ -171,10 +171,10 @@
             "coin": 1
         },
         "func": {
-            "wood": 0,
-            "stone": 2,
-            "brick": 0,
-            "ore": 0
+            "rsc": [
+                "stone",
+                2
+            ]
         },
         "prev": null,
         "next": null
@@ -186,10 +186,10 @@
             "coin": 1
         },
         "func": {
-            "wood": 0,
-            "stone": 0,
-            "brick": 2,
-            "ore": 0
+            "rsc": [
+                "brick",
+                2
+            ]
         },
         "prev": null,
         "next": null
@@ -201,57 +201,60 @@
             "coin": 1
         },
         "func": {
-            "wood": 0,
-            "stone": 0,
-            "brick": 0,
-            "ore": 2
+            "rsc": [
+                "ore",
+                2
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Glassworks":{
+    "Glassworks": {
         "name": "Glassworks",
         "color": "grey",
         "cost": {
             "coin": 0
         },
         "func": {
-            "glass": 1,
-            "papyrus": 0,
-            "cloth": 0
+            "rsc": [
+                "glass",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Press":{
+    "Press": {
         "name": "Press",
         "color": "grey",
         "cost": {
             "coin": 0
         },
         "func": {
-            "glass": 0,
-            "papyrus": 1,
-            "cloth": 0
+            "rsc": [
+                "papyrus",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Loom":{
+    "Loom": {
         "name": "Loom",
         "color": "grey",
         "cost": {
             "coin": 0
         },
         "func": {
-            "glass": 0,
-            "papyrus": 0,
-            "cloth": 1
+            "rsc": [
+                "cloth",
+                1
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Pawnshop":{
+    "Pawnshop": {
         "name": "Pawnshop",
         "color": "blue",
         "cost": {
@@ -267,9 +270,11 @@
             "score": 3
         },
         "prev": null,
-        "next": ["Statue"]
+        "next": [
+            "Statue"
+        ]
     },
-    "Baths":{
+    "Baths": {
         "name": "Baths",
         "color": "blue",
         "cost": {
@@ -285,9 +290,11 @@
             "score": 3
         },
         "prev": null,
-        "next": ["Aqueduct"]
+        "next": [
+            "Aqueduct"
+        ]
     },
-    "Altar":{
+    "Altar": {
         "name": "Altar",
         "color": "blue",
         "cost": {
@@ -303,9 +310,11 @@
             "score": 3
         },
         "prev": null,
-        "next": ["Pantheon"]
+        "next": [
+            "Pantheon"
+        ]
     },
-    "Theater":{
+    "Theater": {
         "name": "Theater",
         "color": "blue",
         "cost": {
@@ -321,9 +330,11 @@
             "score": 3
         },
         "prev": null,
-        "next": ["Gardens"]
+        "next": [
+            "Gardens"
+        ]
     },
-    "Statue":{
+    "Statue": {
         "name": "Statue",
         "color": "blue",
         "cost": {
@@ -338,10 +349,12 @@
         "func": {
             "score": 4
         },
-        "prev": ["Pawnshop"],
+        "prev": [
+            "Pawnshop"
+        ],
         "next": null
     },
-    "Aqueduct":{
+    "Aqueduct": {
         "name": "Aqueduct",
         "color": "blue",
         "cost": {
@@ -356,10 +369,12 @@
         "func": {
             "score": 5
         },
-        "prev": ["Baths"],
+        "prev": [
+            "Baths"
+        ],
         "next": null
     },
-    "Temple":{
+    "Temple": {
         "name": "Temple",
         "color": "blue",
         "cost": {
@@ -377,7 +392,7 @@
         "prev": null,
         "next": null
     },
-    "Courthouse":{
+    "Courthouse": {
         "name": "Courthouse",
         "color": "blue",
         "cost": {
@@ -392,10 +407,12 @@
         "func": {
             "score": 4
         },
-        "prev": ["Scriptorium"],
+        "prev": [
+            "Scriptorium"
+        ],
         "next": null
     },
-    "Pantheon":{
+    "Pantheon": {
         "name": "Pantheon",
         "color": "blue",
         "cost": {
@@ -410,10 +427,12 @@
         "func": {
             "score": 7
         },
-        "prev": ["Altar"],
+        "prev": [
+            "Altar"
+        ],
         "next": null
     },
-    "Gardens":{
+    "Gardens": {
         "name": "Gardens",
         "color": "blue",
         "cost": {
@@ -428,10 +447,12 @@
         "func": {
             "score": 5
         },
-        "prev": ["Theater"],
+        "prev": [
+            "Theater"
+        ],
         "next": null
     },
-    "Town Hall":{
+    "Town Hall": {
         "name": "Town Hall",
         "color": "blue",
         "cost": {
@@ -449,7 +470,7 @@
         "prev": null,
         "next": null
     },
-    "Palace":{
+    "Palace": {
         "name": "Palace",
         "color": "blue",
         "cost": {
@@ -467,7 +488,7 @@
         "prev": null,
         "next": null
     },
-    "Senate":{
+    "Senate": {
         "name": "Senate",
         "color": "blue",
         "cost": {
@@ -482,10 +503,12 @@
         "func": {
             "score": 6
         },
-        "prev": ["Library"],
+        "prev": [
+            "Library"
+        ],
         "next": null
     },
-    "Stockade":{
+    "Stockade": {
         "name": "Stockade",
         "color": "red",
         "cost": {
@@ -503,7 +526,7 @@
         "prev": null,
         "next": null
     },
-    "Barracks":{
+    "Barracks": {
         "name": "Barracks",
         "color": "red",
         "cost": {
@@ -521,7 +544,7 @@
         "prev": null,
         "next": null
     },
-    "Guard Tower":{
+    "Guard Tower": {
         "name": "Guard Tower",
         "color": "red",
         "cost": {
@@ -539,7 +562,7 @@
         "prev": null,
         "next": null
     },
-    "Stables":{
+    "Stables": {
         "name": "Stables",
         "color": "red",
         "cost": {
@@ -554,10 +577,12 @@
         "func": {
             "shield": 2
         },
-        "prev": ["Apothecary"],
+        "prev": [
+            "Apothecary"
+        ],
         "next": null
     },
-    "Archery Range":{
+    "Archery Range": {
         "name": "Archery Range",
         "color": "red",
         "cost": {
@@ -572,10 +597,12 @@
         "func": {
             "shield": 2
         },
-        "prev": ["Workshop"],
+        "prev": [
+            "Workshop"
+        ],
         "next": null
     },
-    "Walls":{
+    "Walls": {
         "name": "Walls",
         "color": "red",
         "cost": {
@@ -591,9 +618,11 @@
             "shield": 2
         },
         "prev": null,
-        "next": ["Fortifications"]
+        "next": [
+            "Fortifications"
+        ]
     },
-    "Training Ground":{
+    "Training Ground": {
         "name": "Training Ground",
         "color": "red",
         "cost": {
@@ -609,9 +638,11 @@
             "shield": 2
         },
         "prev": null,
-        "next": ["Circus"]
+        "next": [
+            "Circus"
+        ]
     },
-    "Castrum":{
+    "Castrum": {
         "name": "Castrum",
         "color": "red",
         "cost": {
@@ -629,7 +660,7 @@
         "prev": null,
         "next": null
     },
-    "Fortifications":{
+    "Fortifications": {
         "name": "Fortifications",
         "color": "red",
         "cost": {
@@ -644,10 +675,12 @@
         "func": {
             "shield": 3
         },
-        "prev": ["Walls"],
+        "prev": [
+            "Walls"
+        ],
         "next": null
     },
-    "Circus":{
+    "Circus": {
         "name": "Circus",
         "color": "red",
         "cost": {
@@ -662,10 +695,12 @@
         "func": {
             "shield": 3
         },
-        "prev": ["Training Ground"],
+        "prev": [
+            "Training Ground"
+        ],
         "next": null
     },
-    "Arsenal":{
+    "Arsenal": {
         "name": "Arsenal",
         "color": "red",
         "cost": {
@@ -683,7 +718,7 @@
         "prev": null,
         "next": null
     },
-    "Siege Workshop":{
+    "Siege Workshop": {
         "name": "Siege Workshop",
         "color": "red",
         "cost": {
@@ -698,10 +733,12 @@
         "func": {
             "shield": 3
         },
-        "prev": ["Laboratory"],
+        "prev": [
+            "Laboratory"
+        ],
         "next": null
     },
-    "Apothecary":{
+    "Apothecary": {
         "name": "Apothecary",
         "color": "green",
         "cost": {
@@ -714,14 +751,15 @@
             "cloth": 1
         },
         "func": {
-            "compass": 1,
-            "tombstone": 0,
-            "wheel": 0
+            "symbol": "compass"
         },
         "prev": null,
-        "next": ["Stables", "Dispensary"]
+        "next": [
+            "Stables",
+            "Dispensary"
+        ]
     },
-    "Workshop":{
+    "Workshop": {
         "name": "Workshop",
         "color": "green",
         "cost": {
@@ -734,14 +772,15 @@
             "cloth": 0
         },
         "func": {
-            "compass": 0,
-            "tombstone": 0,
-            "wheel": 1
+            "symbol": "wheel"
         },
         "prev": null,
-        "next": ["Laboratory", "Archery Range"]
+        "next": [
+            "Laboratory",
+            "Archery Range"
+        ]
     },
-    "Scriptorium":{
+    "Scriptorium": {
         "name": "Scriptorium",
         "color": "green",
         "cost": {
@@ -754,14 +793,15 @@
             "cloth": 0
         },
         "func": {
-            "compass": 0,
-            "tombstone": 1,
-            "wheel": 0
+            "symbol": "tombstone"
         },
         "prev": null,
-        "next": ["Courthouse", "Library"]
+        "next": [
+            "Courthouse",
+            "Library"
+        ]
     },
-    "Dispensary":{
+    "Dispensary": {
         "name": "Dispensary",
         "color": "green",
         "cost": {
@@ -774,14 +814,17 @@
             "cloth": 0
         },
         "func": {
-            "compass": 1,
-            "tombstone": 0,
-            "wheel": 0
+            "symbol": "compass"
         },
-        "prev": ["Apothecary"],
-        "next": ["Lodge", "Arena"]
+        "prev": [
+            "Apothecary"
+        ],
+        "next": [
+            "Lodge",
+            "Arena"
+        ]
     },
-    "Laboratory":{
+    "Laboratory": {
         "name": "Laboratory",
         "color": "green",
         "cost": {
@@ -794,14 +837,17 @@
             "cloth": 0
         },
         "func": {
-            "compass": 0,
-            "tombstone": 0,
-            "wheel": 1
+            "symbol": "wheel"
         },
-        "prev": ["Workshop"],
-        "next": ["Observatory", "Siege Workshop"]
+        "prev": [
+            "Workshop"
+        ],
+        "next": [
+            "Observatory",
+            "Siege Workshop"
+        ]
     },
-    "Library":{
+    "Library": {
         "name": "Library",
         "color": "green",
         "cost": {
@@ -814,14 +860,17 @@
             "cloth": 1
         },
         "func": {
-            "compass": 0,
-            "tombstone": 1,
-            "wheel": 0
+            "symbol": "tombstone"
         },
-        "prev": ["Scriptorium"],
-        "next": ["Senate", "University"]
+        "prev": [
+            "Scriptorium"
+        ],
+        "next": [
+            "Senate",
+            "University"
+        ]
     },
-    "School":{
+    "School": {
         "name": "School",
         "color": "green",
         "cost": {
@@ -834,14 +883,15 @@
             "cloth": 0
         },
         "func": {
-            "compass": 0,
-            "tombstone": 1,
-            "wheel": 0
+            "symbol": "tombstone"
         },
         "prev": null,
-        "next": ["Academy", "Study"]
+        "next": [
+            "Academy",
+            "Study"
+        ]
     },
-    "Lodge":{
+    "Lodge": {
         "name": "Lodge",
         "color": "green",
         "cost": {
@@ -854,14 +904,14 @@
             "cloth": 1
         },
         "func": {
-            "compass": 1,
-            "tombstone": 0,
-            "wheel": 0
+            "symbol": "compass"
         },
-        "prev": ["Dispensary"],
+        "prev": [
+            "Dispensary"
+        ],
         "next": null
     },
-    "Academy":{
+    "Academy": {
         "name": "Academy",
         "color": "green",
         "cost": {
@@ -874,14 +924,14 @@
             "cloth": 0
         },
         "func": {
-            "compass": 1,
-            "tombstone": 0,
-            "wheel": 0
+            "symbol": "compass"
         },
-        "prev": ["School"],
+        "prev": [
+            "School"
+        ],
         "next": null
     },
-    "Observatory":{
+    "Observatory": {
         "name": "Observatory",
         "color": "green",
         "cost": {
@@ -894,14 +944,14 @@
             "cloth": 1
         },
         "func": {
-            "compass": 0,
-            "tombstone": 0,
-            "wheel": 1
+            "symbol": "wheel"
         },
-        "prev": ["Laboratory"],
+        "prev": [
+            "Laboratory"
+        ],
         "next": null
     },
-    "Study":{
+    "Study": {
         "name": "Study",
         "color": "green",
         "cost": {
@@ -914,14 +964,14 @@
             "cloth": 1
         },
         "func": {
-            "compass": 0,
-            "tombstone": 0,
-            "wheel": 1
+            "symbol": "wheel"
         },
-        "prev": ["School"],
+        "prev": [
+            "School"
+        ],
         "next": null
     },
-    "University":{
+    "University": {
         "name": "University",
         "color": "green",
         "cost": {
@@ -934,14 +984,14 @@
             "cloth": 0
         },
         "func": {
-            "compass": 0,
-            "tombstone": 1,
-            "wheel": 0
+            "symbol": "tombstone"
         },
-        "prev": ["Library"],
+        "prev": [
+            "Library"
+        ],
         "next": null
     },
-    "Tavern":{
+    "Tavern": {
         "name": "Tavern",
         "color": "yellow",
         "cost": {
@@ -954,7 +1004,7 @@
             "cloth": 0
         },
         "func": {
-            "coin": [null, null, 5],
+            "coin": 5,
             "score": null,
             "trade": null,
             "rsc": null
@@ -962,7 +1012,7 @@
         "prev": null,
         "next": null
     },
-    "Marketplace":{
+    "Marketplace": {
         "name": "Marketplace",
         "color": "yellow",
         "cost": {
@@ -977,13 +1027,26 @@
         "func": {
             "coin": null,
             "score": null,
-            "trade": [[1, -1], ["glass", "papyrus", "cloth"], 1],
+            "trade": [
+                [
+                    1,
+                    -1
+                ],
+                [
+                    "glass",
+                    "papyrus",
+                    "cloth"
+                ],
+                1
+            ],
             "rsc": null
         },
         "prev": null,
-        "next": ["Caravansery"]
+        "next": [
+            "Caravansery"
+        ]
     },
-    "East Trading Post":{
+    "East Trading Post": {
         "name": "East Trading Post",
         "color": "yellow",
         "cost": {
@@ -998,13 +1061,26 @@
         "func": {
             "coin": null,
             "score": null,
-            "trade": [[1], ["wood", "stone", "brick", "ore"], 1],
+            "trade": [
+                [
+                    1
+                ],
+                [
+                    "wood",
+                    "stone",
+                    "brick",
+                    "ore"
+                ],
+                1
+            ],
             "rsc": null
         },
         "prev": null,
-        "next": ["Forum"]
+        "next": [
+            "Forum"
+        ]
     },
-    "West Trading Post":{
+    "West Trading Post": {
         "name": "West Trading Post",
         "color": "yellow",
         "cost": {
@@ -1019,13 +1095,26 @@
         "func": {
             "coin": null,
             "score": null,
-            "trade": [[-1], ["wood", "stone", "brick", "ore"], 1],
+            "trade": [
+                [
+                    -1
+                ],
+                [
+                    "wood",
+                    "stone",
+                    "brick",
+                    "ore"
+                ],
+                1
+            ],
             "rsc": null
         },
         "prev": null,
-        "next": ["Forum"]
+        "next": [
+            "Forum"
+        ]
     },
-    "Caravansery":{
+    "Caravansery": {
         "name": "Caravansery",
         "color": "yellow",
         "cost": {
@@ -1041,20 +1130,19 @@
             "coin": null,
             "score": null,
             "trade": null,
-            "rsc": {
-                "wood": 0.25,
-                "stone": 0.25,
-                "brick": 0.25,
-                "ore": 0.25,
-                "glass": 0,
-                "papyrus": 0,
-                "cloth": 0
-            }
+            "rsc": [
+                "wood|stone|brick|ore",
+                1
+            ]
         },
-        "prev": ["Marketplace"],
-        "next": ["Lighthouse"]
+        "prev": [
+            "Marketplace"
+        ],
+        "next": [
+            "Lighthouse"
+        ]
     },
-    "Forum":{
+    "Forum": {
         "name": "Forum",
         "color": "yellow",
         "cost": {
@@ -1070,20 +1158,20 @@
             "coin": null,
             "score": null,
             "trade": null,
-            "rsc": {
-                "wood": 0,
-                "stone": 0,
-                "brick": 0,
-                "ore": 0,
-                "glass": 0.33,
-                "papyrus": 0.33,
-                "cloth": 0.33
-            }
+            "rsc": [
+                "glass|papyrus|cloth",
+                1
+            ]
         },
-        "prev": ["East Trading Post", "West Trading Post"],
-        "next": ["Haven"]
+        "prev": [
+            "East Trading Post",
+            "West Trading Post"
+        ],
+        "next": [
+            "Haven"
+        ]
     },
-    "Vineyard":{
+    "Vineyard": {
         "name": "Vineyard",
         "color": "yellow",
         "cost": {
@@ -1096,7 +1184,17 @@
             "cloth": 0
         },
         "func": {
-            "coin": [[1, -1, 0], "brown", 1],
+            "coin": [
+                [
+                    1,
+                    -1,
+                    0
+                ],
+                [
+                    "brown"
+                ],
+                1
+            ],
             "score": null,
             "trade": null,
             "rsc": null
@@ -1104,7 +1202,7 @@
         "prev": null,
         "next": null
     },
-    "Bazaar":{
+    "Bazaar": {
         "name": "Bazaar",
         "color": "yellow",
         "cost": {
@@ -1117,7 +1215,17 @@
             "cloth": 0
         },
         "func": {
-            "coin": [[1, -1, 0], "grey", 2],
+            "coin": [
+                [
+                    1,
+                    -1,
+                    0
+                ],
+                [
+                    "grey"
+                ],
+                2
+            ],
             "score": null,
             "trade": null,
             "rsc": null
@@ -1125,7 +1233,7 @@
         "prev": null,
         "next": null
     },
-    "Lighthouse":{
+    "Lighthouse": {
         "name": "Lighthouse",
         "color": "yellow",
         "cost": {
@@ -1138,15 +1246,33 @@
             "cloth": 0
         },
         "func": {
-            "coin": [[0], "yellow", 1],
-            "score": [[0], "yellow", 1],
+            "coin": [
+                [
+                    0
+                ],
+                [
+                    "yellow"
+                ],
+                1
+            ],
+            "score": [
+                [
+                    0
+                ],
+                [
+                    "yellow"
+                ],
+                1
+            ],
             "trade": null,
             "rsc": null
         },
-        "prev": ["Caravansery"],
+        "prev": [
+            "Caravansery"
+        ],
         "next": null
     },
-    "Haven":{
+    "Haven": {
         "name": "Haven",
         "color": "yellow",
         "cost": {
@@ -1159,15 +1285,33 @@
             "cloth": 1
         },
         "func": {
-            "coin": [[0], "brown", 1],
-            "score": [[0], "brown", 1],
+            "coin": [
+                [
+                    0
+                ],
+                [
+                    "brown"
+                ],
+                1
+            ],
+            "score": [
+                [
+                    0
+                ],
+                [
+                    "brown"
+                ],
+                1
+            ],
             "trade": null,
             "rsc": null
         },
-        "prev": ["Forum"],
+        "prev": [
+            "Forum"
+        ],
         "next": null
     },
-    "Chamber of Commerce":{
+    "Chamber of Commerce": {
         "name": "Chamber of Commerce",
         "color": "yellow",
         "cost": {
@@ -1180,15 +1324,31 @@
             "cloth": 0
         },
         "func": {
-            "coin": [[0], "grey", 2],
-            "score": [[0], "grey", 2],
+            "coin": [
+                [
+                    0
+                ],
+                [
+                    "grey"
+                ],
+                2
+            ],
+            "score": [
+                [
+                    0
+                ],
+                [
+                    "grey"
+                ],
+                2
+            ],
             "trade": null,
             "rsc": null
         },
         "prev": null,
         "next": null
     },
-    "Ludus":{
+    "Ludus": {
         "name": "Ludus",
         "color": "yellow",
         "cost": {
@@ -1201,15 +1361,31 @@
             "cloth": 0
         },
         "func": {
-            "coin": [[0], "red", 3],
-            "score": [[0], "red", 1],
+            "coin": [
+                [
+                    0
+                ],
+                [
+                    "red"
+                ],
+                3
+            ],
+            "score": [
+                [
+                    0
+                ],
+                [
+                    "red"
+                ],
+                1
+            ],
             "trade": null,
             "rsc": null
         },
         "prev": null,
         "next": null
     },
-    "Arena":{
+    "Arena": {
         "name": "Arena",
         "color": "yellow",
         "cost": {
@@ -1222,15 +1398,33 @@
             "cloth": 0
         },
         "func": {
-            "coin": [[0], "wonder", 3],
-            "score": [[0], "wonder", 1],
+            "coin": [
+                [
+                    0
+                ],
+                [
+                    "wonder"
+                ],
+                3
+            ],
+            "score": [
+                [
+                    0
+                ],
+                [
+                    "wonder"
+                ],
+                1
+            ],
             "trade": null,
             "rsc": null
         },
-        "prev": ["Dispensary"],
+        "prev": [
+            "Dispensary"
+        ],
         "next": null
     },
-    "Workers Guild":{
+    "Workers Guild": {
         "name": "Workers Guild",
         "color": "purple",
         "cost": {
@@ -1243,14 +1437,23 @@
             "cloth": 0
         },
         "func": {
-            "score": [[1, -1], "brown", 1],
-            "symbols": null,
+            "score": [
+                [
+                    1,
+                    -1
+                ],
+                [
+                    "brown"
+                ],
+                1
+            ],
+            "symbol": null,
             "others": null
         },
         "prev": null,
         "next": null
     },
-    "Craftsmens Guild":{
+    "Craftsmens Guild": {
         "name": "Craftsmens Guild",
         "color": "purple",
         "cost": {
@@ -1263,14 +1466,23 @@
             "cloth": 0
         },
         "func": {
-            "score": [[1, -1], "grey", 2],
-            "symbols": null,
+            "score": [
+                [
+                    1,
+                    -1
+                ],
+                [
+                    "grey"
+                ],
+                2
+            ],
+            "symbol": null,
             "others": null
         },
         "prev": null,
         "next": null
     },
-    "Magistrates Guild":{
+    "Magistrates Guild": {
         "name": "Magistrates Guild",
         "color": "purple",
         "cost": {
@@ -1283,14 +1495,23 @@
             "cloth": 1
         },
         "func": {
-            "score": [[1, -1], "blue", 1],
-            "symbols": null,
+            "score": [
+                [
+                    1,
+                    -1
+                ],
+                [
+                    "blue"
+                ],
+                1
+            ],
+            "symbol": null,
             "others": null
         },
         "prev": null,
         "next": null
     },
-    "Traders Guild":{
+    "Traders Guild": {
         "name": "Traders Guild",
         "color": "purple",
         "cost": {
@@ -1303,14 +1524,23 @@
             "cloth": 1
         },
         "func": {
-            "score": [[1, -1], "yellow", 1],
-            "symbols": null,
+            "score": [
+                [
+                    1,
+                    -1
+                ],
+                [
+                    "yellow"
+                ],
+                1
+            ],
+            "symbol": null,
             "others": null
         },
         "prev": null,
         "next": null
     },
-    "Builders Guild":{
+    "Builders Guild": {
         "name": "Builders Guild",
         "color": "purple",
         "cost": {
@@ -1323,14 +1553,24 @@
             "cloth": 0
         },
         "func": {
-            "score": [[1, 0, -1], "wonder", 1],
-            "symbols": null,
+            "score": [
+                [
+                    1,
+                    0,
+                    -1
+                ],
+                [
+                    "wonder"
+                ],
+                1
+            ],
+            "symbol": null,
             "others": null
         },
         "prev": null,
         "next": null
     },
-    "Spies Guild":{
+    "Spies Guild": {
         "name": "Spies Guild",
         "color": "purple",
         "cost": {
@@ -1343,14 +1583,23 @@
             "cloth": 0
         },
         "func": {
-            "score": [[1, -1], "red", 1],
-            "symbols": null,
+            "score": [
+                [
+                    1,
+                    -1
+                ],
+                [
+                    "red"
+                ],
+                1
+            ],
+            "symbol": null,
             "others": null
         },
         "prev": null,
         "next": null
     },
-    "Philosophers Guild":{
+    "Philosophers Guild": {
         "name": "Philosophers Guild",
         "color": "purple",
         "cost": {
@@ -1363,14 +1612,23 @@
             "cloth": 1
         },
         "func": {
-            "score": [[1, -1], "green", 1],
-            "symbols": null,
+            "score": [
+                [
+                    1,
+                    -1
+                ],
+                [
+                    "green"
+                ],
+                1
+            ],
+            "symbol": null,
             "others": null
         },
         "prev": null,
         "next": null
     },
-    "Decorators Guild":{
+    "Decorators Guild": {
         "name": "Decorators Guild",
         "color": "purple",
         "cost": {
@@ -1384,13 +1642,19 @@
         },
         "func": {
             "score": null,
-            "symbols": null,
-            "others": [[0], "wonder", 7]
+            "symbol": null,
+            "others": [
+                [
+                    0
+                ],
+                "wonder",
+                7
+            ]
         },
         "prev": null,
         "next": null
     },
-    "Scientists Guild":{
+    "Scientists Guild": {
         "name": "Scientists Guild",
         "color": "purple",
         "cost": {
@@ -1404,17 +1668,13 @@
         },
         "func": {
             "score": null,
-            "symbols": {
-                "compass": 0.33,
-                "tombstone": 0.33,
-                "wheel": 0.33
-            },
+            "symbol": "compass|tombstone|wheel",
             "others": null
         },
         "prev": null,
         "next": null
     },
-    "Shipowners Guild":{
+    "Shipowners Guild": {
         "name": "Shipowners Guild",
         "color": "purple",
         "cost": {
@@ -1427,8 +1687,18 @@
             "cloth": 0
         },
         "func": {
-            "score": [[0], ["brown", "grey", "purple"], 1],
-            "symbols": null,
+            "score": [
+                [
+                    0
+                ],
+                [
+                    "brown",
+                    "grey",
+                    "purple"
+                ],
+                1
+            ],
+            "symbol": null,
             "others": null
         },
         "prev": null,
