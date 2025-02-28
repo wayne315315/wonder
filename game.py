@@ -180,13 +180,9 @@ class Game:
 
     def recv_face(self, i):
         player = self.players[i]
-        state = deepcopy(self.state)
-        # player-centric state
-        for _ in range(i):
-            state.append(state.pop(0))
         # ask player
         while True:
-            face = player.send_face(state)
+            face = player.send_face(self.civs[i])
             if face in ["Day", "Night"]:
                 break
         return face
@@ -208,7 +204,7 @@ class Game:
             pick, action = player.send_move(state, record, hand, asked)
             asked = True
             # Ensure no illegal pick or action
-            if pick not in hand or action not in Action:
+            if pick not in hand or action not in list(Action):
                 continue
             # Ensure no wonder built in scavenging round
             if scavenge and action == Action.WONDER:
@@ -310,6 +306,7 @@ class Game:
                     elif type(x) == list:
                         offsets, colors, coin_per_card = x
                         cnt = sum(self.color[(i + offset) % self.n][color] for offset, color in itertools.product(offsets, colors))
+                        cnt += int("yellow" in colors) # yellow card itself
                         self.state[i]["coin"] += cnt * coin_per_card
                 elif color == "purple":
                     if card["func"]["symbol"]:
@@ -458,7 +455,7 @@ class Game:
             self.update(moves)
 
             # additional move ("seven" for Babylon)
-            if self.seven and self.turn % 6 == 0:
+            if self.seven is not None and self.turn % 6 == 0:
                 moves = [None] * self.n
                 moves[self.seven] = self.recv_move(self.seven)
                 self.update(moves)
@@ -466,14 +463,21 @@ class Game:
             # clear desk at the end of each age
             if self.turn % 6 == 0:
                 self.clear()
+                print("Remove all hands")
 
             # additional move ("scavenge" for Halikarnassos)
-            if self.scavenge:
+            if self.scavenge is not None:
                 if self.discard:
+                    pick, action, trade = self.recv_move(self.scavenge, scavenge=True)
                     moves = [None] * self.n
-                    moves[self.scavenge] = self.recv_move(self.scavenge, scavenge=True)
+                    moves[self.scavenge] = (pick, action, trade)
                     self.update(moves, scavenge=True)
+                    if action == Action.BUILD:
+                        self.discard.remove(pick)
+                else:
+                    print("Sorry ~ No card to scavenge")
                 self.scavenge = None
+                    
 
             # rotate the hands
             # clockwise (Age I, III)
@@ -485,6 +489,8 @@ class Game:
 
             ### military conflict at the end of each age
             if self.turn % 6 == 0:
+                print("Age %d finished" % (self.turn // 6)) ###
+                print("Battle") ###
                 self.battle()
             
             # go to next turn
@@ -526,11 +532,13 @@ class Game:
 
 
 if __name__ == "__main__":
-    from player import RandomPlayer
+    from player import RandomPlayer, HumanPlayer
 
     n = 3
-    game = Game(n)
+    #['Alexandria', 'Babylon', 'Éphesos', 'Gizah', 'Halikarnassos', 'Olympia', 'Rhódos']
+    game = Game(n, civs=['Halikarnassos', 'Gizah', 'Rhódos'], faces=["Night"] * 3, random_face=False)
     players = [RandomPlayer() for _ in range(n)]
+    players[0] = HumanPlayer()
     for i in range(n):
         game.register(i, players[i])
     import time
