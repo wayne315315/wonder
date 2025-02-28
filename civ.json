@@ -561,7 +561,7 @@
                         "rsc": null,
                         "shield": null,
                         "symbol": null,
-                        "others": "discard"
+                        "others": "scavenge"
                     }
                 },
                 {
@@ -603,7 +603,7 @@
                         "rsc": null,
                         "shield": null,
                         "symbol": null,
-                        "others": "discard"
+                        "others": "scavenge"
                     }
                 },
                 {
@@ -623,7 +623,7 @@
                         "rsc": null,
                         "shield": null,
                         "symbol": null,
-                        "others": "discard"
+                        "others": "scavenge"
                     }
                 },
                 {
@@ -643,7 +643,7 @@
                         "rsc": null,
                         "shield": null,
                         "symbol": null,
-                        "others": "discard"
+                        "others": "scavenge"
                     }
                 }
             ]
