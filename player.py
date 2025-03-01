@@ -9,6 +9,49 @@ class Player(ABC):
     def __init__(self):
         self.buffer = None
 
+    def show_state(self, state):
+        print("")
+        print("STATE")
+        for item in state:
+            built = item.pop("built")
+            color = item.pop("color")
+            coin = item.pop("coin")
+            rsc = item.pop("rsc")
+            rsc_tradable = item.pop("rsc_tradable")
+            shield = item.pop("shield")
+            symbol = item.pop("symbol")
+            print("")
+            print(item)
+            print("built: ", built)
+            print("--------------------")
+            print("color: ", color)
+            print("coin: ", coin)
+            print("rsc: ", dict(rsc))
+            print("rsc_tradable: ", dict(rsc_tradable))
+            print("shield: ", shield)
+            print("symbol: ", dict(symbol))
+            item["built"] = built
+            item["color"] = color
+            item["coin"] = coin
+            item["rsc"] = rsc
+            item["rsc_tradable"] = rsc_tradable
+            item["shield"] = shield
+            item["symbol"] = symbol
+
+    def show_record(self, record):
+        print("")
+        print("RECORD: ", [args for *args, _ in record])
+
+    def show_hand(self, hand):
+        print("")
+        print("HAND: ", hand)
+
+    def show_coins(self, coins):
+        print("")
+        print("Trade coins combination: ")
+        for i, coin in enumerate(coins):
+            print(f"{i}: {coin}")  
+
     @abstractmethod
     def send_face(self, state):
         pass
@@ -26,10 +69,17 @@ class Player(ABC):
         pass
 
 class RandomPlayer(Player):
+    def __init__(self, verbose=False):
+        super().__init__()
+        self.verbose = verbose
     def send_face(self, civ):
         return random.choice(["Day", "Night"])
 
     def send_move(self, state, record, hand, asked):
+        if self.verbose:
+            self.show_state(state)
+            self.show_record(record)
+            self.show_hand(hand)
         if not asked:
             x = list(itertools.product(hand, [Action.DISCARD]))
             y = list(itertools.product(hand, [Action.BUILD, Action.WONDER]))
@@ -40,6 +90,10 @@ class RandomPlayer(Player):
         return pick, action
 
     def send_trade(self, state, record, coins):
+        if self.verbose:
+            self.show_state(state)
+            self.show_record(record)
+            self.show_coins(coins)
         return random.choice(coins)
 
     def recv_score(self, scores):
@@ -57,19 +111,11 @@ class HumanPlayer(Player):
                 return "Night"
             else:
                 print("Invalid input. Please type \"D\" or \"N\" ")
-
+    
     def send_move(self, state, record, hand, asked):
-        print("state: ")
-        for item in state:
-            built = item.pop("built")   
-            print("")
-            print(item)
-            print("built: ", built)
-            item["built"] = built
-        print("")
-        print("record: ", [args for *args, _ in record])
-        print("")
-        print("hand: ", hand)
+        self.show_state(state)
+        self.show_record(record)
+        self.show_hand(hand)
         if not asked:
             self.buffer = set()
         else:
@@ -90,19 +136,9 @@ class HumanPlayer(Player):
         return pick, action
 
     def send_trade(self, state, record, coins):
-        print("state: ")
-        for item in state:
-            built = item.pop("built")   
-            print("")
-            print(item)
-            print("built: ", built)
-            item["built"] = built
-        print("")
-        print("record: ", [args for *args, _ in record])
-        print("")
-        print("trade coins combination: ")
-        for i, coin in enumerate(coins):
-            print(f"{i}: {coin}")
+        self.show_state(state)
+        self.show_record(record)
+        self.show_coins(coins)
         while True:
             i = input("Choose a trade combination (type the number) : ").strip()
             try:

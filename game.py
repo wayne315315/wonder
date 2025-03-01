@@ -333,6 +333,12 @@ class Game:
                 self.state[i]["built"].append((self.turn, pick))
                 self.built[i].add(pick)
                 self.color[i][CARDS[pick]["color"]] += 1
+        # THIRD : self.state[i] (rsc, rsc_tradable, symbol, shield)
+        for i in range(self.n):
+            ###self.state[i]["rsc"] = self.rsc[i]
+            ###self.state[i]["rsc_tradable"] = self.rsc_tradable[i]
+            ###self.state[i]["symbol"] = self.symbol[i]
+            self.state[i]["shield"] = self.shield[i]
 
     def clear(self):
         for hand in self.hands:
@@ -421,13 +427,17 @@ class Game:
             {
                 "civ": name, 
                 "face": face, 
-                "rsc": CIVS[name]["rsc"],
+                "rsc": self.rsc[i],
+                "rsc_tradable": self.rsc_tradable[i],
+                "shield": 0,
+                "symbol": self.symbol[i],
+                "color": self.color[i],
                 "coin": 3,
                 "built": [],
                 "wonder": [],
                 "discard": []
             } 
-            for name, face in zip(self.civs, self.faces)
+            for i, name, face in zip(range(self.n), self.civs, self.faces)
         ]
 
     def run(self):
@@ -508,7 +518,7 @@ class Game:
 
             items = ["civilian", "conflict", "science", "commerce", "guild", "wonder", "wealth", "total"]
             print("")
-            print(civ, face)
+            print("="*10 , civ, face, "="*10)
             print("** ", {item: score[i] for item, score in zip(items, scores)}, "**")
             print("** ",color_num, " **")
             for color in ALL_COLORS[:-1]:
@@ -536,7 +546,7 @@ if __name__ == "__main__":
 
     n = 3
     #['Alexandria', 'Babylon', 'Éphesos', 'Gizah', 'Halikarnassos', 'Olympia', 'Rhódos']
-    game = Game(n, civs=['Halikarnassos', 'Gizah', 'Rhódos'], faces=["Night"] * 3, random_face=False)
+    game = Game(n)
     players = [RandomPlayer() for _ in range(n)]
     players[0] = HumanPlayer()
     for i in range(n):
