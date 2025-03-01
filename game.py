@@ -318,7 +318,7 @@ class Game:
             if not x:
                 continue
             pick, action, (coin_left, coin_right) = x
-            self.record[i].append((self.turn, pick, action, self.hands[i]))
+            self.record[i].append((self.turn, pick, action, deepcopy(self.hands[i])))
             if not scavenge:
                 self.hands[i].remove(pick)
             if action == Action.DISCARD:
