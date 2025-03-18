@@ -21,7 +21,9 @@ class AIPlayer(RandomPlayer):
         self.action2idx = {action: i for i, action in enumerate(self.action)}
         self.model = model
 
-    def s2v(self, state, record):
+    def s2v(self, state, record, hand):
+        print("STATE:", state)
+        print("RECORD:", record)
         # determine the number of players
         n = len(state)
         # (turn, card, action, pos, civ, face)
@@ -78,7 +80,7 @@ class AIPlayer(RandomPlayer):
         return random.choice(["Day", "Night"])
 
     def send_move(self, state, record, hand, asked):
-        v = self.s2v(state, record) # shape (18 * n + 6, 6)
+        v = self.s2v(state, record, hand) # shape (18 * n + 6, 6)
         print(self.model(v))
         return super().send_move(state, record, hand, asked)
     
@@ -88,12 +90,16 @@ class AIPlayer(RandomPlayer):
     def recv_score(self, scores):
         pass
 
-from model import Embedding
-model = Embedding(len(CARDS), 128)
-n = 3
-game = Game(n)
-players = [AIPlayer(model), RandomPlayer(), RandomPlayer()]
-for i in range(n):
-    game.register(i, players[i])
 
-game.run()
+
+if __name__ == "__main__":
+    from model import Embedding
+    model = Embedding(len(CARDS), 128)
+    n = 4
+    game = Game(n)
+    players = [RandomPlayer() for _ in range(n)]
+    players[0] = AIPlayer(model)
+    for i in range(n):
+        game.register(i, players[i])
+
+    game.run()
