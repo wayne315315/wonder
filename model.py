@@ -7,10 +7,7 @@ class HandEmbedding(tf.keras.layers.Layer):
         self.emb = tf.keras.layers.Embedding(num_card + 1, d_model) # padding value 0
     
     def call(self, x):
-        x = tf.reduce_mean(self.emb(x), -2, keepdims=True)
-        return x
-
-
+        return self.emb(x)
 
 
 class StateEmbedding(tf.keras.layers.Layer):
@@ -125,8 +122,7 @@ class Encoder(tf.keras.layers.Layer):
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
 
     def call(self, x):
-        # `x` is token-IDs shape: (batch, seq_len)
-        x = self.embedding(x)  # Shape `(batch_size, seq_len, d_model)`.
+        x = self.embedding(x)
 
         # Add dropout.
         x = self.dropout(x)
@@ -134,13 +130,13 @@ class Encoder(tf.keras.layers.Layer):
         for i in range(self.num_layers):
             x = self.enc_layers[i](x)
 
-        return x  # Shape `(batch_size, seq_len, d_model)`.
+        return x 
 
 
 class DecoderLayer(tf.keras.layers.Layer):
     def __init__(self, *, d_model, num_heads, dff, dropout_rate=0.1):
         super().__init__()
-        self.causal_self_attention = GlobalSelfAttention(
+        self.self_attention = GlobalSelfAttention(
             num_heads=num_heads,
             key_dim=d_model,
             dropout=dropout_rate)
@@ -151,11 +147,11 @@ class DecoderLayer(tf.keras.layers.Layer):
         self.ffn = FeedForward(d_model, dff)
 
     def call(self, x, context):
-        x = self.causal_self_attention(x=x)
+        x = self.self_attention(x=x)
         x = self.cross_attention(x=x, context=context)
         # Cache the last attention scores for plotting later
         self.last_attn_scores = self.cross_attention.last_attn_scores
-        x = self.ffn(x)  # Shape `(batch_size, seq_len, d_model)`.
+        x = self.ffn(x) 
         return x
   
 
@@ -171,17 +167,15 @@ class Decoder(tf.keras.layers.Layer):
         self.last_attn_scores = None
 
     def call(self, x, context):
-        # `x` is token-IDs shape (batch, target_seq_len)
-        x = self.embedding(x)  # (batch_size, target_seq_len, d_model)
+        x = self.embedding(x)  
         x = self.dropout(x)
         for i in range(self.num_layers):
             x  = self.dec_layers[i](x, context)
         self.last_attn_scores = self.dec_layers[-1].last_attn_scores
-        # The shape of x is (batch_size, target_seq_len, d_model).
         return x
 
 class Transformer(tf.keras.Model):
-    def __init__(self, *, num_layers, d_model, num_heads, dff, num_card, num_final, dropout_rate=0.1):
+    def __init__(self, *, num_layers, d_model, num_heads, dff, num_card, d_final, dropout_rate=0.1):
         super().__init__()
         hand_emb = HandEmbedding(num_card, d_model)
         self.encoder = Encoder(num_layers=num_layers, d_model=d_model,
@@ -194,26 +188,27 @@ class Transformer(tf.keras.Model):
                             hand_emb=hand_emb,
                             dropout_rate=dropout_rate)
 
-        self.final_layer = tf.keras.layers.Dense(num_final)
+        self.final_layer = tf.keras.layers.Dense(d_final, activation='relu')
 
     def call(self, *inputs):
-        # To use a Keras model with `.fit` you must pass all your inputs in the
-        # first argument.
         state, hand = inputs
 
-        context = self.encoder(state)  # (batch_size, context_len, d_model)
+        context = self.encoder(state)  # (batch_size, 18*n+6, d_model)
 
-        x = self.decoder(hand, context)  # (batch_size, target_len, d_model)
+        x = self.decoder(hand, context)  # (batch_size, num_hand, d_model)
 
         # Final linear layer output.
-        features = self.final_layer(x)  # (batch_size, target_len, target_vocab_size)
+        x = tf.reduce_sum(x, axis=1)  # (batch_size, d_model)
+        features = self.final_layer(x) # (batch_size, d_final)
 
+        """
         print("")
         print("state", state.shape)
         print("hand", hand.shape)
         print("context", context.shape)
         print("x", x.shape)
-        print("features", features.shape)
+        print("features", features.shape)"
+        """
 
         try:
             # Drop the keras mask, so it doesn't scale the losses/metrics.
@@ -222,15 +217,14 @@ class Transformer(tf.keras.Model):
         except AttributeError:
             pass
 
-        # Return the final output and the attention weights.
         return features
 
 
 class ActorCritic(tf.keras.Model):
-    def __init__(self, num_card, num_final, d_model=512, dff=512, num_heads=8, num_layers=4, dropout_rate=0.1):
+    def __init__(self, num_card, d_final, d_model=512, dff=128, num_heads=8, num_layers=4, dropout_rate=0.1):
         super().__init__()
-        self.common = Transformer(num_layers=num_layers, d_model=d_model, num_heads=num_heads, dff=dff, num_card=num_card, num_final=num_final, dropout_rate=dropout_rate)
-        self.actor = tf.keras.layers.Dense(num_card) ## TODO
+        self.common = Transformer(num_layers=num_layers, d_model=d_model, num_heads=num_heads, dff=dff, num_card=num_card, d_final=d_final, dropout_rate=dropout_rate)
+        self.actor = tf.keras.layers.Dense(num_card * 3) ## TODO
         self.critic =tf.keras.layers.Dense(1) ## TODO
 
     def call(self, state, hand):

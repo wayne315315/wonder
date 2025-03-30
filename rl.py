@@ -83,8 +83,15 @@ class AIPlayer(RandomPlayer):
         h = self.h2v(hand)
         v = tf.expand_dims(v, axis=0)
         h = tf.expand_dims(h, axis=0)
-        self.model(v, h)
-        return super().send_move(state, record, hand, asked)
+        policy, value = self.model(v, h)
+        output = tf.random.categorical(policy, 1).numpy()[0,0]
+        i_card, i_action = divmod(output, len(Action))
+        card = self.cards[i_card + 1]
+        action = self.action[i_action + 1]
+        print("card :", card)
+        print("action", action)
+        return (card, action)
+        #return super().send_move(state, record, hand, asked)
     
     def send_trade(self, state, record, coins):
         return coins[0]
@@ -97,7 +104,7 @@ class AIPlayer(RandomPlayer):
 if __name__ == "__main__":
     from model import ActorCritic
     model = ActorCritic(len(CARDS), 100)
-    n = 3
+    n = 7
     game = Game(n)
     players = [RandomPlayer() for _ in range(n)]
     players[0] = AIPlayer(model)
