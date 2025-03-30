@@ -86,6 +86,7 @@ class AIPlayer(RandomPlayer):
             h = tf.expand_dims(h, axis=0)
             policy, value = self.model(v, h)
             # gumbal max trick to sample from policy distribution without replacement
+            # http://amid.fish/humble-gumbel
             noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(policy))))
             logits = policy + noise
             self.buffer = tf.argsort(logits, axis=-1, direction='ASCENDING').numpy()[0].tolist()
