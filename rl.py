@@ -106,10 +106,22 @@ class AIPlayer(RandomPlayer):
 if __name__ == "__main__":
     from model import ActorCritic
     model = ActorCritic(len(CARDS), 100)
-    n = 7
+    n = 3
     game = Game(n)
     players = [RandomPlayer() for _ in range(n)]
     players[0] = AIPlayer(model)
+    for i in range(n):
+        game.register(i, players[i])
+
+    game.run()
+    model.summary()
+    model.save("meow.keras")
+    ####
+    print("load model")
+    new_model = tf.keras.models.load_model('meow.keras')
+    game = Game(n)
+    players = [RandomPlayer() for _ in range(n)]
+    players[0] = AIPlayer(new_model)
     for i in range(n):
         game.register(i, players[i])
 
