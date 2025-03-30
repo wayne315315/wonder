@@ -21,7 +21,7 @@ class AIPlayer(RandomPlayer):
         self.action2idx = {action: i for i, action in enumerate(self.action)}
         self.model = model
 
-    def s2v(self, state, record, hand):
+    def s2v(self, state, record):
         print("STATE:", state)
         print("RECORD:", record)
         # determine the number of players
@@ -71,7 +71,8 @@ class AIPlayer(RandomPlayer):
 
 
     def h2v(self, hand):
-        pass
+        h = np.asarray([self.card2idx[card] for card in hand])
+        return h
 
     def c2v(self, coins):
         pass
@@ -80,8 +81,9 @@ class AIPlayer(RandomPlayer):
         return random.choice(["Day", "Night"])
 
     def send_move(self, state, record, hand, asked):
-        v = self.s2v(state, record, hand) # shape (18 * n + 6, 6)
-        print(self.model(v))
+        v = self.s2v(state, record) # shape (18 * n + 6, 6)
+        h = self.h2v(hand)
+        self.model(v, h)
         return super().send_move(state, record, hand, asked)
     
     def send_trade(self, state, record, coins):
@@ -93,9 +95,9 @@ class AIPlayer(RandomPlayer):
 
 
 if __name__ == "__main__":
-    from model import Embedding
-    model = Embedding(len(CARDS), 128)
-    n = 4
+    from model import ActorCritic
+    model = ActorCritic(len(CARDS), 100)
+    n = 7
     game = Game(n)
     players = [RandomPlayer() for _ in range(n)]
     players[0] = AIPlayer(model)
