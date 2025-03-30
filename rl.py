@@ -79,27 +79,28 @@ class AIPlayer(RandomPlayer):
         return random.choice(["Day", "Night"])
 
     def send_move(self, state, record, hand, asked):
-        v = self.s2v(state, record) # shape (18 * n + 6, 6)
-        h = self.h2v(hand)
-        v = tf.expand_dims(v, axis=0)
-        h = tf.expand_dims(h, axis=0)
-        policy, value = self.model(v, h)
-        output = tf.random.categorical(policy, 1).numpy()[0,0]
+        if not asked:
+            v = self.s2v(state, record) # shape (18 * n + 6, 6)
+            h = self.h2v(hand)
+            v = tf.expand_dims(v, axis=0)
+            h = tf.expand_dims(h, axis=0)
+            policy, value = self.model(v, h)
+            # gumbal max trick to sample from policy distribution without replacement
+            noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(policy))))
+            logits = policy + noise
+            self.buffer = tf.argsort(logits, axis=-1, direction='ASCENDING').numpy()[0].tolist()
+
+        output = self.buffer.pop()
         i_card, i_action = divmod(output, len(Action))
         card = self.cards[i_card + 1]
         action = self.action[i_action + 1]
-        print("card :", card)
-        print("action", action)
         return (card, action)
-        #return super().send_move(state, record, hand, asked)
-    
+
     def send_trade(self, state, record, coins):
         return coins[0]
 
     def recv_score(self, scores):
         pass
-
-
 
 if __name__ == "__main__":
     from model import ActorCritic
