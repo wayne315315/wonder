@@ -22,8 +22,6 @@ class AIPlayer(RandomPlayer):
         self.model = model
 
     def s2v(self, state, record):
-        print("STATE:", state)
-        print("RECORD:", record)
         # determine the number of players
         n = len(state)
         # (turn, card, action, pos, civ, face)
@@ -83,6 +81,8 @@ class AIPlayer(RandomPlayer):
     def send_move(self, state, record, hand, asked):
         v = self.s2v(state, record) # shape (18 * n + 6, 6)
         h = self.h2v(hand)
+        v = tf.expand_dims(v, axis=0)
+        h = tf.expand_dims(h, axis=0)
         self.model(v, h)
         return super().send_move(state, record, hand, asked)
     
@@ -97,7 +97,7 @@ class AIPlayer(RandomPlayer):
 if __name__ == "__main__":
     from model import ActorCritic
     model = ActorCritic(len(CARDS), 100)
-    n = 7
+    n = 3
     game = Game(n)
     players = [RandomPlayer() for _ in range(n)]
     players[0] = AIPlayer(model)
@@ -105,3 +105,4 @@ if __name__ == "__main__":
         game.register(i, players[i])
 
     game.run()
+    model.summary()

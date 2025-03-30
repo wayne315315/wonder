@@ -7,7 +7,9 @@ class HandEmbedding(tf.keras.layers.Layer):
         self.emb = tf.keras.layers.Embedding(num_card + 1, d_model) # padding value 0
     
     def call(self, x):
-        return tf.reduce_sum(self.emb(x), -2, keepdims=True)
+        x = tf.reduce_mean(self.emb(x), -2, keepdims=True)
+        return x
+
 
 
 
@@ -32,14 +34,13 @@ class StateEmbedding(tf.keras.layers.Layer):
         n = (tf.shape(x)[-2] - 6) // 18
         o = int(self.offset.lookup(n).numpy())
         # (turn, card, action, pos, civ, face)
-        turn_emb = self.turn_emb(x[:, 0]) # (18*n+6, d_model)
-        card_emb = self.card_emb(x[:, 1])
-        action_emb = self.action_emb(x[:, 2])
-        pos_emb = self.pos_emb(x[:, 3] + o)
-        civ_emb = self.civ_emb(x[:, 4])
-        face_emb = self.face_emb(x[:, 5])
-        total_emb = turn_emb + card_emb + action_emb + pos_emb + civ_emb + face_emb
-        print("TOTAL_EMB", total_emb)
+        turn_emb = self.turn_emb(x[:, :, 0])
+        card_emb = self.card_emb(x[:, :, 1])
+        action_emb = self.action_emb(x[:, :, 2])
+        pos_emb = self.pos_emb(x[:, :, 3] + o)
+        civ_emb = self.civ_emb(x[:, :, 4])
+        face_emb = self.face_emb(x[:, :, 5])
+        total_emb = turn_emb + card_emb + action_emb + pos_emb + civ_emb + face_emb # (bash, 18*n+6, d_model)
         return total_emb
 
 
@@ -131,7 +132,6 @@ class Encoder(tf.keras.layers.Layer):
         x = self.dropout(x)
 
         for i in range(self.num_layers):
-            print("Encode ", i, ":", x) ###
             x = self.enc_layers[i](x)
 
         return x  # Shape `(batch_size, seq_len, d_model)`.
@@ -199,14 +199,21 @@ class Transformer(tf.keras.Model):
     def call(self, *inputs):
         # To use a Keras model with `.fit` you must pass all your inputs in the
         # first argument.
-        context, x  = inputs
+        state, hand = inputs
 
-        context = self.encoder(context)  # (batch_size, context_len, d_model)
+        context = self.encoder(state)  # (batch_size, context_len, d_model)
 
-        x = self.decoder(x, context)  # (batch_size, target_len, d_model)
+        x = self.decoder(hand, context)  # (batch_size, target_len, d_model)
 
         # Final linear layer output.
         features = self.final_layer(x)  # (batch_size, target_len, target_vocab_size)
+
+        print("")
+        print("state", state.shape)
+        print("hand", hand.shape)
+        print("context", context.shape)
+        print("x", x.shape)
+        print("features", features.shape)
 
         try:
             # Drop the keras mask, so it doesn't scale the losses/metrics.
@@ -220,7 +227,7 @@ class Transformer(tf.keras.Model):
 
 
 class ActorCritic(tf.keras.Model):
-    def __init__(self, num_card, num_final, d_model=512, dff=512, num_heads=7, num_layers=4, dropout_rate=0.1):
+    def __init__(self, num_card, num_final, d_model=512, dff=512, num_heads=8, num_layers=4, dropout_rate=0.1):
         super().__init__()
         self.common = Transformer(num_layers=num_layers, d_model=d_model, num_heads=num_heads, dff=dff, num_card=num_card, num_final=num_final, dropout_rate=dropout_rate)
         self.actor = tf.keras.layers.Dense(num_card) ## TODO
