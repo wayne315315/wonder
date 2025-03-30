@@ -60,7 +60,7 @@ class AIPlayer(RandomPlayer):
         
         # padding
         # (turn, card, action, pos, civ, face)
-        m = 18 * n + 6 - len(v) # max total : Prime turn n + (18-1) turn * n player + 3 extra turn (Babylon) + 3 extra turn (Halikarnassos)
+        m = 19 * n + 6 - len(v) # max total : Prime turn n + 18 turn * n player + 3 extra turn (Babylon) + 3 extra turn (Halikarnassos)
         for _ in range(m):
             v.append([19, 0, 0, n, 0, 0])
 

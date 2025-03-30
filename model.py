@@ -1,25 +1,26 @@
 import tensorflow as tf
 
 
+@tf.keras.utils.register_keras_serializable()
 class HandEmbedding(tf.keras.layers.Layer):
-    def __init__(self, num_card, d_model):
-        super().__init__()
+    def __init__(self, num_card, d_model, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.emb = tf.keras.layers.Embedding(num_card + 1, d_model) # padding value 0
     
     def call(self, x):
         return self.emb(x)
 
 
+@tf.keras.utils.register_keras_serializable()
 class StateEmbedding(tf.keras.layers.Layer):
-    def __init__(self, hand_emb):
-        super().__init__()
+    def __init__(self, hand_emb, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         d_model = hand_emb.emb.output_dim
         self.turn_emb = tf.keras.layers.Embedding(20, d_model) # turn 1-18; initial prime 0; padding value 19
-        self.pos_emb = tf.keras.layers.Embedding(30, d_model) # 4+5+6+7+8 = 30; padding value 4, 9, 15, 22, 30
-        #self.pos_emb = {n: tf.keras.layers.Embedding(n + 1, d_model) for n in range(3, 8)} # n : 3-7 ; padding value n
+        self.pos_emb = tf.keras.layers.Embedding(30, d_model) # offset value 0,4,9,15,22; padding 3,8,14,21,29
         self.civ_emb = tf.keras.layers.Embedding(8, d_model) # padding value 0
         self.face_emb = tf.keras.layers.Embedding(3, d_model) # padding value 0
-        self.card_emb = hand_emb.emb # padding value 0
+        self.card_emb = hand_emb # padding value 0
         self.action_emb = tf.keras.layers.Embedding(4, d_model) # padding value 0
         self.offset = tf.lookup.StaticHashTable(tf.lookup.KeyValueTensorInitializer(
             tf.constant([3,4,5,6,7]), 
@@ -28,7 +29,7 @@ class StateEmbedding(tf.keras.layers.Layer):
             )
 
     def call(self, x):
-        n = (tf.shape(x)[-2] - 6) // 18
+        n = (tf.shape(x)[-2] - 6) // 19
         o = int(self.offset.lookup(n).numpy())
         # (turn, card, action, pos, civ, face)
         turn_emb = self.turn_emb(x[:, :, 0])
@@ -37,17 +38,32 @@ class StateEmbedding(tf.keras.layers.Layer):
         pos_emb = self.pos_emb(x[:, :, 3] + o)
         civ_emb = self.civ_emb(x[:, :, 4])
         face_emb = self.face_emb(x[:, :, 5])
-        total_emb = turn_emb + card_emb + action_emb + pos_emb + civ_emb + face_emb # (bash, 18*n+6, d_model)
+        total_emb = turn_emb + card_emb + action_emb + pos_emb + civ_emb + face_emb # (bash, 19*n+6, d_model)
         return total_emb
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'hand_emb': tf.keras.utils.serialize_keras_object(self.card_emb),
+        })
+        return config
+    
+    @classmethod
+    def from_config(cls, config):
+        hand_emb = tf.keras.utils.deserialize_keras_object(config.pop("hand_emb"))
+        return cls(hand_emb, **config)
 
 
+@tf.keras.utils.register_keras_serializable()
 class BaseAttention(tf.keras.layers.Layer):
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.mha = tf.keras.layers.MultiHeadAttention(**kwargs)
+    def __init__(self, num_heads, key_dim, dropout=0.0, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mha = tf.keras.layers.MultiHeadAttention(num_heads, key_dim, dropout=dropout)
         self.layernorm = tf.keras.layers.LayerNormalization()
         self.add = tf.keras.layers.Add()
 
+
+@tf.keras.utils.register_keras_serializable()
 class CrossAttention(BaseAttention):
     def call(self, x, context):
         attn_output, attn_scores = self.mha(
@@ -62,7 +78,9 @@ class CrossAttention(BaseAttention):
         x = self.layernorm(x)
         return x
 
-class GlobalSelfAttention(BaseAttention):
+
+@tf.keras.utils.register_keras_serializable()
+class GlobalSelfAttention(BaseAttention): 
     def call(self, x):
         attn_output = self.mha(
             query=x,
@@ -73,11 +91,13 @@ class GlobalSelfAttention(BaseAttention):
         x = self.layernorm(x)
         return x
 
+
+@tf.keras.utils.register_keras_serializable()
 class FeedForward(tf.keras.layers.Layer):
-    def __init__(self, d_model, dff, dropout_rate=0.1):
-        super().__init__()
+    def __init__(self, d_model, d_ff, dropout_rate=0.1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.seq = tf.keras.Sequential([
-            tf.keras.layers.Dense(dff, activation='relu'),
+            tf.keras.layers.Dense(d_ff, activation='relu'),
             tf.keras.layers.Dense(d_model),
             tf.keras.layers.Dropout(dropout_rate)
         ])
@@ -89,53 +109,70 @@ class FeedForward(tf.keras.layers.Layer):
         x = self.layer_norm(x) 
         return x
 
-class EncoderLayer(tf.keras.layers.Layer):
-    def __init__(self,*, d_model, num_heads, dff, dropout_rate=0.1):
-        super().__init__()
 
+@tf.keras.utils.register_keras_serializable()
+class EncoderLayer(tf.keras.layers.Layer):
+    def __init__(self, d_model, num_heads, d_ff, dropout_rate=0.1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.self_attention = GlobalSelfAttention(
             num_heads=num_heads,
             key_dim=d_model,
             dropout=dropout_rate
         )
-
-        self.ffn = FeedForward(d_model, dff)
+        self.ffn = FeedForward(d_model, d_ff)
 
     def call(self, x):
         x = self.self_attention(x)
         x = self.ffn(x)
         return x
-    
-class Encoder(tf.keras.layers.Layer):
-    def __init__(self, *, num_layers, d_model, num_heads, dff, hand_emb, dropout_rate=0.1):
-        super().__init__()
-        self.d_model = d_model
-        self.num_layers = num_layers
-        self.embedding = StateEmbedding(hand_emb)
 
+
+@tf.keras.utils.register_keras_serializable()    
+class Encoder(tf.keras.layers.Layer):
+    def __init__(self, num_layers, d_model, num_heads, d_ff, hand_emb, dropout_rate=0.1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.num_layers = num_layers
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.d_ff = d_ff
+        self.dropout_rate = dropout_rate
+        self.embedding = StateEmbedding(hand_emb)
         self.enc_layers = [
             EncoderLayer(d_model=d_model,
                         num_heads=num_heads,
-                        dff=dff,
+                        d_ff=d_ff,
                         dropout_rate=dropout_rate)
             for _ in range(num_layers)]
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
 
     def call(self, x):
         x = self.embedding(x)
-
-        # Add dropout.
         x = self.dropout(x)
-
         for i in range(self.num_layers):
             x = self.enc_layers[i](x)
+        return x
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'num_layers': self.num_layers,
+            'd_model': self.d_model,
+            'num_heads': self.num_heads,
+            'd_ff': self.d_ff,
+            'hand_emb': tf.keras.utils.serialize_keras_object(self.embedding.card_emb),
+            'dropout_rate': self.dropout_rate
+        })
+        return config
+    
+    @classmethod
+    def from_config(cls, config):
+        hand_emb = tf.keras.utils.deserialize_keras_object(config.pop("hand_emb"))
+        return cls(hand_emb=hand_emb, **config)
 
-        return x 
-
-
+@tf.keras.utils.register_keras_serializable()
 class DecoderLayer(tf.keras.layers.Layer):
-    def __init__(self, *, d_model, num_heads, dff, dropout_rate=0.1):
-        super().__init__()
+    def __init__(self, d_model, num_heads, d_ff, dropout_rate=0.1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.self_attention = GlobalSelfAttention(
             num_heads=num_heads,
             key_dim=d_model,
@@ -144,7 +181,7 @@ class DecoderLayer(tf.keras.layers.Layer):
             num_heads=num_heads,
             key_dim=d_model,
             dropout=dropout_rate)
-        self.ffn = FeedForward(d_model, dff)
+        self.ffn = FeedForward(d_model, d_ff)
 
     def call(self, x, context):
         x = self.self_attention(x=x)
@@ -155,15 +192,19 @@ class DecoderLayer(tf.keras.layers.Layer):
         return x
   
 
+@tf.keras.utils.register_keras_serializable()
 class Decoder(tf.keras.layers.Layer):
-    def __init__(self, *, num_layers, d_model, num_heads, dff, hand_emb, dropout_rate=0.1):
-        super().__init__()
-        self.d_model = d_model
+    def __init__(self, num_layers, d_model, num_heads, d_ff, hand_emb, dropout_rate=0.1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.num_layers = num_layers
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.d_ff = d_ff
+        self.dropout_rate = dropout_rate
         self.embedding = hand_emb
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
         self.dec_layers = [DecoderLayer(d_model=d_model, num_heads=num_heads,
-                        dff=dff, dropout_rate=dropout_rate) for _ in range(num_layers)]
+                        d_ff=d_ff, dropout_rate=dropout_rate) for _ in range(num_layers)]
         self.last_attn_scores = None
 
     def call(self, x, context):
@@ -173,62 +214,113 @@ class Decoder(tf.keras.layers.Layer):
             x  = self.dec_layers[i](x, context)
         self.last_attn_scores = self.dec_layers[-1].last_attn_scores
         return x
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'num_layers': self.num_layers,
+            'd_model': self.d_model,
+            'num_heads': self.num_heads,
+            'd_ff': self.d_ff,
+            'hand_emb': tf.keras.utils.serialize_keras_object(self.embedding),
+            'dropout_rate': self.dropout_rate
+        })
+        return config
+    
+    @classmethod
+    def from_config(cls, config):
+        hand_emb = tf.keras.utils.deserialize_keras_object(config.pop("hand_emb"))
+        return cls(hand_emb=hand_emb, **config)
 
+@tf.keras.utils.register_keras_serializable()
 class Transformer(tf.keras.Model):
-    def __init__(self, *, num_layers, d_model, num_heads, dff, num_card, d_final, dropout_rate=0.1):
-        super().__init__()
+    def __init__(self, num_layers, d_model, num_heads, d_ff, num_card, d_final, dropout_rate=0.1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.num_layers = num_layers
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.d_ff = d_ff
+        self.num_card = num_card
+        self.d_final = d_final
+        self.dropout_rate = dropout_rate
         hand_emb = HandEmbedding(num_card, d_model)
         self.encoder = Encoder(num_layers=num_layers, d_model=d_model,
-                            num_heads=num_heads, dff=dff,
+                            num_heads=num_heads, d_ff=d_ff,
                             hand_emb=hand_emb,
                             dropout_rate=dropout_rate)
-
         self.decoder = Decoder(num_layers=num_layers, d_model=d_model,
-                            num_heads=num_heads, dff=dff,
+                            num_heads=num_heads, d_ff=d_ff,
                             hand_emb=hand_emb,
                             dropout_rate=dropout_rate)
-
         self.final_layer = tf.keras.layers.Dense(d_final, activation='relu')
 
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'num_layers': self.num_layers,
+            'd_model': self.d_model,
+            'num_heads': self.num_heads,
+            'd_ff': self.d_ff,
+            'num_card': self.num_card,
+            'd_final': self.d_final,
+            'dropout_rate': self.dropout_rate
+        })
+        return config
+    
     def call(self, *inputs):
         state, hand = inputs
-
         context = self.encoder(state)  # (batch_size, 18*n+6, d_model)
-
         x = self.decoder(hand, context)  # (batch_size, num_hand, d_model)
-
         # Final linear layer output.
         x = tf.reduce_sum(x, axis=1)  # (batch_size, d_model)
         features = self.final_layer(x) # (batch_size, d_final)
-
         """
         print("")
         print("state", state.shape)
         print("hand", hand.shape)
         print("context", context.shape)
         print("x", x.shape)
-        print("features", features.shape)"
+        print("features", features.shape)
         """
-
         try:
             # Drop the keras mask, so it doesn't scale the losses/metrics.
             # b/250038731
             del features._keras_mask
         except AttributeError:
             pass
-
         return features
 
 @tf.keras.utils.register_keras_serializable()
 class ActorCritic(tf.keras.Model):
-    def __init__(self, num_card, d_final, d_model=512, dff=128, num_heads=8, num_layers=4, dropout_rate=0.1):
-        super().__init__()
-        self.common = Transformer(num_layers=num_layers, d_model=d_model, num_heads=num_heads, dff=dff, num_card=num_card, d_final=d_final, dropout_rate=dropout_rate)
-        self.actor = tf.keras.layers.Dense(num_card * 3) ## TODO
-        self.critic =tf.keras.layers.Dense(1) ## TODO
+    def __init__(self, num_card, d_final, d_model=512, d_ff=128, num_heads=8, num_layers=4, dropout_rate=0.1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.num_card = num_card
+        self.d_final = d_final
+        self.d_model = d_model
+        self.d_ff = d_ff
+        self.num_heads = num_heads
+        self.num_layers = num_layers
+        self.dropout_rate = dropout_rate
+        self.common = Transformer(num_layers=num_layers, d_model=d_model, num_heads=num_heads, d_ff=d_ff, num_card=num_card, d_final=d_final, dropout_rate=dropout_rate)
+        self.actor = tf.keras.layers.Dense(num_card * 3)
+        self.critic =tf.keras.layers.Dense(1)
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'num_layers': self.num_layers,
+            'd_model': self.d_model,
+            'num_heads': self.num_heads,
+            'd_ff': self.d_ff,
+            'num_card': self.num_card,
+            'd_final': self.d_final,
+            'dropout_rate': self.dropout_rate
+        })
+        return config
 
     def call(self, state, hand):
         features = self.common(state, hand)
         policy = self.actor(features) # logits
         value = self.critic(features) # expected return
         return policy, value
+
