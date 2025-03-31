@@ -75,7 +75,7 @@ class AIPlayer(Player):
     def send_face(self, state):
         v = self.s2v(state, [])
         face = random.choice(["Day", "Night"]) # [[API_CALL, *args, *res, is_valid]]
-        self.record.append(["face", state, face, True])
+        self.record.append(["face", [state], [face], True])
         return face
 
     def send_move(self, state, record, hand, asked):
@@ -92,16 +92,16 @@ class AIPlayer(Player):
         i_card, i_action = divmod(output, len(Action))
         pick = self.cards[i_card + 1]
         action = self.action[i_action + 1]
-        self.record.append(["move", state, record, hand, pick, action, True])
+        self.record.append(["move", [state, record, hand], [pick, action], True])
         return (pick, action)
 
     def send_trade(self, state, record, coins):
         trade = coins[0]
-        self.record.append(["trade", state, record, coins, trade, True])
+        self.record.append(["trade", [state, record, coins], [trade], True])
         return trade
 
     def recv_score(self, scores):
-        self.record.append(["score", scores, True])
+        self.record.append(["score", [scores], [], True])
 
 if __name__ == "__main__":
     import tensorflow as tf

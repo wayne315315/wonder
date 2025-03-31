@@ -75,7 +75,7 @@ class RandomPlayer(Player):
         self.verbose = verbose
     def send_face(self, state):
         face = random.choice(["Day", "Night"]) # [[API_CALL, *args, *res, is_valid]]
-        self.record.append(["face", state, face, True])
+        self.record.append(["face", [state], [face], True])
         return face
 
     def send_move(self, state, record, hand, asked):
@@ -92,7 +92,7 @@ class RandomPlayer(Player):
         else:
             self.record[-1][-1] = False # last move is invalid
         pick, action = self.buffer.pop()
-        self.record.append(["move", state, record, hand, pick, action, True])
+        self.record.append(["move", [state, record, hand], [pick, action], True])
         return pick, action
 
     def send_trade(self, state, record, coins):
@@ -101,11 +101,11 @@ class RandomPlayer(Player):
             self.show_record(record)
             self.show_coins(coins)
         trade = random.choice(coins)
-        self.record.append(["trade", state, record, coins, trade, True])
+        self.record.append(["trade", [state, record, coins], [trade], True])
         return trade
 
     def recv_score(self, scores):
-        self.record.append(["score", scores, True])
+        self.record.append(["score", [scores], [], True])
         
 
 class HumanPlayer(Player):
@@ -124,7 +124,7 @@ class HumanPlayer(Player):
                 break
             else:
                 print("Invalid input. Please type \"D\" or \"N\" ")
-        self.record.append(["face", state, face, True])
+        self.record.append(["face", [state], [face], True])
         return face
     
     def send_move(self, state, record, hand, asked):
@@ -149,7 +149,7 @@ class HumanPlayer(Player):
                 break
         a2a = {"B": Action.BUILD, "W": Action.WONDER, "D": Action.DISCARD}
         action = a2a[action]
-        self.record.append(["move", state, record, hand, pick, action, True])
+        self.record.append(["move", [state, record, hand], [pick, action], True])
         return pick, action
 
     def send_trade(self, state, record, coins):
@@ -164,8 +164,8 @@ class HumanPlayer(Player):
                 print("** ERROR: Invalid input. Please try again")
             else:
                 break
-        self.record.append(["trade", state, record, coins, trade, True])
+        self.record.append(["trade", [state, record, coins], [trade], True])
         return trade
 
     def recv_score(self, scores):
-        self.record.append(["score", scores, True])
+        self.record.append(["score", [scores], [], True])
