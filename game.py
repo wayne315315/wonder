@@ -22,6 +22,7 @@
 # wonder
 # - cost : rsc
 # - func : coin, score, rsc, shield, symbol, others
+import logging
 import random
 import itertools
 from copy import deepcopy
@@ -91,6 +92,12 @@ class Game:
         self.wealth = [0] * n # coin / 3
         self.total = [0] * n
 
+        # logger
+        # debug, info, warning, error, critical
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+
     def export(self):
         return self.n, self.civs, self.faces, self.deck, self.random_face
 
@@ -128,6 +135,9 @@ class Game:
                 if not self.rsc_compute(l, left_needed, own=False)[0] and not self.rsc_compute(r, right_needed, own=False)[0]:
                     rsc_trade.append((left_needed, right_needed))
         return rsc_trade
+    
+    def coin(self):
+        return [self.state[i]["coin"] for i in range(self.n)]
 
     def coin_trade(self, i, pick, action, free):
         # Step 1. If the Action is DISCARD, return []
@@ -448,7 +458,8 @@ class Game:
             "guild": self.guild,
             "wonder": self.wonder,
             "wealth": self.wealth,
-            "total": self.total
+            "total": self.total,
+            "coin": self.coin()
         }
         return scores
 
@@ -477,7 +488,9 @@ class Game:
             for i, name, face in zip(range(self.n), self.civs, self.faces)
         ]
 
-    def run(self):
+    def run(self, verbose=logging.INFO):
+        # set the logger
+        self.logger.setLevel(verbose)
         # check if all players are registered
         assert all(self.players)
         # initialize the game
@@ -504,7 +517,7 @@ class Game:
             # clear desk at the end of each age
             if self.turn % 6 == 0:
                 self.clear()
-                print("Remove all hands")
+                self.logger.info("Remove all hands")
             # additional move ("scavenge" for Halikarnassos)
             if self.scavenge is not None:
                 if self.discard:
@@ -515,7 +528,7 @@ class Game:
                     if action == Action.BUILD:
                         self.discard.remove(pick)
                 else:
-                    print("Sorry ~ No card to scavenge")
+                    self.logger.warning("Sorry ~ No card to scavenge")
                 self.scavenge = None
             # rotate the hands
             # clockwise (Age I, III)
@@ -526,8 +539,8 @@ class Game:
                 self.hands.insert(0, self.hands.pop())
             ### military conflict at the end of each age
             if self.turn % 6 == 0:
-                print("Age %d finished" % (self.turn // 6)) ###
-                print("Battle") ###
+                self.logger.info("Age %d finished" % (self.turn // 6)) ###
+                self.logger.info("Battle") ###
                 self.battle()
             # go to next turn
             self.turn += 1
@@ -535,28 +548,28 @@ class Game:
         # Calculate score
         scores = self.calculate()
         # Show score
-        items = ["civilian", "conflict", "science", "commerce", "guild", "wonder", "wealth", "total"]
+        items = ["civilian", "conflict", "science", "commerce", "guild", "wonder", "wealth", "total", "coin"]
         for i in range(self.n):
             state = self.state[i]
             color_num = self.color[i]
             civ = state["civ"]
             face = state["face"]
-            print("")
-            print("="*10 , civ, face, "="*10)
-            print("** ", {item: scores[item][i] for item in items}, "**")
-            print("** ", color_num, " **")
+            self.logger.info("")
+            self.logger.info("=" * 20 + " %s %s " % (civ, face) + "=" * 20)
+            self.logger.info("Scores: %s" % {item: scores[item][i] for item in items})
+            self.logger.debug("Colors: %s" % color_num)
             for color in ALL_COLORS[:-1]:
                 x = [(turn, pick) for turn, pick in state["built"] if CARDS[pick]["color"] == color]
-                print(color, len(x), x)
-            print("-----------")
-            print("wonder", state["wonder"])
-            print("discard", state["discard"])
-            print("-----------")
-            print("coin", state["coin"])
-            print("rsc", self.rsc[i])
-            print("rsc_tradable", self.rsc_tradable[i])
-            print("shield", self.shield[i])
-            print("symbol", self.symbol[i]) 
+                self.logger.debug("%s %d %s" % (color, len(x), x))
+            self.logger.debug("-----------")
+            self.logger.debug("wonder %s" % state["wonder"])
+            self.logger.debug("discard %s" % state["discard"])
+            self.logger.debug("-----------")
+            self.logger.debug("coin %s" % state["coin"])
+            self.logger.debug("rsc %s" % self.rsc[i])
+            self.logger.debug("rsc_tradable %s" % self.rsc_tradable[i])
+            self.logger.debug("shield %s" % self.shield[i])
+            self.logger.debug("symbol %s" % self.symbol[i])
         # Send player-centric score to players
         for i in range(self.n):
             scores_i = deepcopy(scores)
@@ -584,26 +597,10 @@ class Game:
 
 if __name__ == "__main__":
     from player import RandomPlayer, HumanPlayer
-
     n = 3
     #['Alexandria', 'Babylon', 'Éphesos', 'Gizah', 'Halikarnassos', 'Olympia', 'Rhódos']
     game = Game(n, random_face=False)
     players = [RandomPlayer() for _ in range(n)]
-    #players[0] = HumanPlayer()
     for i in range(n):
         game.register(i, players[i])
-    import time
-    t1 = time.time()
     game.run()
-    t2 = time.time()
-    print("time elapsed: %.2f seconds" %(t2 - t1))
-
-    # load the same game configuration
-    #"""
-    n, civs, faces, deck, random_face = game.export()
-    game2 = Game(n, civs=civs, faces=faces, deck=deck, random_face=random_face)
-    players = [RandomPlayer() for _ in range(n)]
-    for i in range(n):
-        game2.register(i, players[i])
-    game2.run()
-    #"""
