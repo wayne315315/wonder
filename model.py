@@ -318,9 +318,17 @@ class ActorCritic(tf.keras.Model):
         })
         return config
 
-    def call(self, state, hand):
-        features = self.common(state, hand)
+    def call(self, states, hands):
+        features = self.common(states, hands)
         policy = self.actor(features) # logits
         value = self.critic(features) # expected return
         return policy, value
-
+    
+    def predict_move(self, states, hands):
+        policy, value = self(states, hands)
+        # gumbel max trick to sample from policy distribution without replacement
+        # http://amid.fish/humble-gumbel
+        noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(policy))))
+        logits = policy + noise
+        moves = tf.argsort(logits, axis=-1, direction='ASCENDING').numpy()
+        return moves

@@ -1,14 +1,12 @@
 import random
 
 import numpy as np
-import tensorflow as tf
 
-from game import Game
-from player import Player, RandomPlayer
+from player import Player
 from const import Action, CARDS, CIVS
 
 
-class AIPlayer(RandomPlayer):
+class AIPlayer(Player):
     def __init__(self, model):
         super().__init__()
         self.civs = [None] + list(CIVS)
@@ -67,7 +65,6 @@ class AIPlayer(RandomPlayer):
         v = np.asarray(v)
         return v
 
-
     def h2v(self, hand):
         h = np.asarray([self.card2idx[card] for card in hand])
         return h
@@ -76,35 +73,41 @@ class AIPlayer(RandomPlayer):
         pass
 
     def send_face(self, state):
-        return random.choice(["Day", "Night"])
+        v = self.s2v(state, [])
+        face = random.choice(["Day", "Night"]) # [[API_CALL, *args, *res, is_valid]]
+        self.record.append(["face", state, face, True])
+        return face
 
     def send_move(self, state, record, hand, asked):
         if not asked:
             v = self.s2v(state, record) # shape (18 * n + 6, 6)
             h = self.h2v(hand)
-            v = tf.expand_dims(v, axis=0)
-            h = tf.expand_dims(h, axis=0)
-            policy, value = self.model(v, h)
-            # gumbal max trick to sample from policy distribution without replacement
-            # http://amid.fish/humble-gumbel
-            noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(policy))))
-            logits = policy + noise
-            self.buffer = tf.argsort(logits, axis=-1, direction='ASCENDING').numpy()[0].tolist()
+            v = np.expand_dims(v, axis=0)
+            h = np.expand_dims(h, axis=0)
+            self.buffer = self.model.predict_move(v, h)[0].tolist()
+        else:
+            self.record[-1][-1] = False # last move is invalid
 
         output = self.buffer.pop()
         i_card, i_action = divmod(output, len(Action))
-        card = self.cards[i_card + 1]
+        pick = self.cards[i_card + 1]
         action = self.action[i_action + 1]
-        return (card, action)
+        self.record.append(["move", state, record, hand, pick, action, True])
+        return (pick, action)
 
     def send_trade(self, state, record, coins):
-        return coins[0]
+        trade = coins[0]
+        self.record.append(["trade", state, record, coins, trade, True])
+        return trade
 
     def recv_score(self, scores):
-        pass
+        self.record.append(["score", scores, True])
 
 if __name__ == "__main__":
+    import tensorflow as tf
+    from player import RandomPlayer
     from model import ActorCritic
+    from game import Game
     model = ActorCritic(len(CARDS), 100)
     n = 3
     game = Game(n)
@@ -115,11 +118,11 @@ if __name__ == "__main__":
 
     game.run()
     model.summary()
-    model.save("meow.keras")
+    model.save("ac.keras")
     ####
     print("load model")
-    new_model = tf.keras.models.load_model('meow.keras')
-    game = Game(n)
+    new_model = tf.keras.models.load_model('ac.keras')
+    game = Game(n, random_face=False)
     players = [RandomPlayer() for _ in range(n)]
     players[0] = AIPlayer(new_model)
     for i in range(n):

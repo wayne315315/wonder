@@ -45,9 +45,17 @@ class Game:
             deck[2].extend(guilds)
             for d in deck:
                 random.shuffle(d)
+        
+        # assert
+        if not random_face:
+            try:
+                assert faces is None
+            except AssertionError:
+                raise ValueError("If faces are given, random_face should be always set to True")
 
         # basics
         self.n = n
+        self.random_face = random_face
         self.civs = civs
         self.faces = [random.choice(["Day", "Night"]) for _ in range(n)] if random_face and not faces else faces
         self.turn = 1
@@ -82,12 +90,15 @@ class Game:
         self.wonder = [0] * n # wonder
         self.wealth = [0] * n # coin / 3
         self.total = [0] * n
-    
+
     def export(self):
-        return self.n, self.civs, self.faces, self.deck
+        return self.n, self.civs, self.faces, self.deck, self.random_face
 
     def register(self, i, player):
         self.players[i] = player
+
+    def unregister(self):
+        self.players = [None] * self.n
 
     def rsc_compute(self, i, cost, own=True):
         rsc_seed = self.rsc[i] if own else self.rsc_tradable[i]
@@ -180,9 +191,29 @@ class Game:
 
     def recv_face(self, i):
         player = self.players[i]
+        # initialize the state
+        state = [
+            {
+                "civ": name, 
+                "face": None, 
+                "rsc": self.rsc[j],
+                "rsc_tradable": self.rsc_tradable[j],
+                "shield": 0,
+                "symbol": self.symbol[j],
+                "color": self.color[j],
+                "coin": 3,
+                "built": [],
+                "wonder": [],
+                "discard": []
+            } 
+            for j, name in zip(range(self.n), self.civs)
+        ]
+        # player-centric state
+        for _ in range(i):
+            state.append(state.pop(0))
         # ask player
         while True:
-            face = player.send_face(self.civs[i])
+            face = player.send_face(state)
             if face in ["Day", "Night"]:
                 break
         return face
@@ -366,7 +397,6 @@ class Game:
             l = (i - 1) % self.n
             r = (i + 1) % self.n
             wonders = CIVS[self.civs[i]]["wonders"][self.faces[i]]
-            
             # wealth score
             self.wealth[i] = self.state[i]["coin"] // 3
             # wonder score
@@ -382,8 +412,7 @@ class Game:
                 science = 0
                 science += sum([cnt ** 2 for cnt in cnts])
                 science += 7 * min(cnts)
-                self.science[i] = max(self.science[i], science)
-            
+                self.science[i] = max(self.science[i], science)            
             # blue, yellow, purple score
             for name in self.built[i]:
                 card = CARDS[name]
@@ -411,9 +440,17 @@ class Game:
                         self.guild[i] += 7
             # total score
             self.total[i] = sum([self.civilian[i], self.conflict[i], self.science[i], self.commerce[i], self.guild[i], self.wonder[i], self.wealth[i]])
-
-        return self.civilian, self.conflict, self.science, self.commerce, self.guild, self.wonder, self.wealth, self.total
-
+        scores = {
+            "civilian": self.civilian,
+            "conflict": self.conflict,
+            "science": self.science,
+            "commerce": self.commerce,
+            "guild": self.guild,
+            "wonder": self.wonder,
+            "wealth": self.wealth,
+            "total": self.total
+        }
+        return scores
 
     def init(self):
         # determine the face for each civ
@@ -443,10 +480,8 @@ class Game:
     def run(self):
         # check if all players are registered
         assert all(self.players)
-
         # initialize the game
         self.init()
-
         # routine
         while self.turn <= 18:
             ### distribute cards in the beginning of each age
@@ -454,27 +489,22 @@ class Game:
                 deck = self.deck[self.turn // 6]
                 for j, name in enumerate(deck):
                     self.hands[j % self.n].append(name)
-
             ### regular turn 
             # players make moves (pick, action, trade)
             # concurrent move selection
             with ThreadPoolExecutor(self.n) as executor:
                 moves = list(executor.map(self.recv_move, range(self.n)))
-
             # update 
             self.update(moves)
-
             # additional move ("seven" for Babylon)
             if self.seven is not None and self.turn % 6 == 0:
                 moves = [None] * self.n
                 moves[self.seven] = self.recv_move(self.seven)
                 self.update(moves)
-
             # clear desk at the end of each age
             if self.turn % 6 == 0:
                 self.clear()
                 print("Remove all hands")
-
             # additional move ("scavenge" for Halikarnassos)
             if self.scavenge is not None:
                 if self.discard:
@@ -487,8 +517,6 @@ class Game:
                 else:
                     print("Sorry ~ No card to scavenge")
                 self.scavenge = None
-                    
-
             # rotate the hands
             # clockwise (Age I, III)
             # counter-clockwise (Age II)
@@ -496,31 +524,27 @@ class Game:
                 self.hands.append(self.hands.pop(0))
             else: # clockwise
                 self.hands.insert(0, self.hands.pop())
-
             ### military conflict at the end of each age
             if self.turn % 6 == 0:
                 print("Age %d finished" % (self.turn // 6)) ###
                 print("Battle") ###
                 self.battle()
-            
             # go to next turn
             self.turn += 1
 
         # Calculate score
         scores = self.calculate()
-
-        #"""
+        # Show score
+        items = ["civilian", "conflict", "science", "commerce", "guild", "wonder", "wealth", "total"]
         for i in range(self.n):
             state = self.state[i]
             color_num = self.color[i]
             civ = state["civ"]
             face = state["face"]
-
-            items = ["civilian", "conflict", "science", "commerce", "guild", "wonder", "wealth", "total"]
             print("")
             print("="*10 , civ, face, "="*10)
-            print("** ", {item: score[i] for item, score in zip(items, scores)}, "**")
-            print("** ",color_num, " **")
+            print("** ", {item: scores[item][i] for item in items}, "**")
+            print("** ", color_num, " **")
             for color in ALL_COLORS[:-1]:
                 x = [(turn, pick) for turn, pick in state["built"] if CARDS[pick]["color"] == color]
                 print(color, len(x), x)
@@ -533,12 +557,29 @@ class Game:
             print("rsc_tradable", self.rsc_tradable[i])
             print("shield", self.shield[i])
             print("symbol", self.symbol[i]) 
-
-        #"""
-        
-        # Send score to players
+        # Send player-centric score to players
         for i in range(self.n):
-            self.players[i].recv_score(scores)
+            scores_i = deepcopy(scores)
+            for item in items:
+                for _ in range(i):
+                    scores_i[item].append(scores_i[item].pop(0))
+            self.players[i].recv_score(scores_i)
+        # Collect history from registered players
+        history = [self.players[i].record for i in range(self.n)]
+        # Remove player's game record
+        for i in range(self.n):
+            self.players[i].record = []
+        ### Reset game
+        # export game configuration
+        n, civs, faces, deck, random_face = self.export()
+        # preserve players
+        players = self.players
+        # if random_face is set to False, remove the faces
+        if not random_face:
+            faces = None
+        self.__init__(n, civs=civs, faces=faces, deck=deck, random_face=random_face)
+        self.players = players
+        return history
 
 
 if __name__ == "__main__":
@@ -546,9 +587,9 @@ if __name__ == "__main__":
 
     n = 3
     #['Alexandria', 'Babylon', 'Éphesos', 'Gizah', 'Halikarnassos', 'Olympia', 'Rhódos']
-    game = Game(n)
+    game = Game(n, random_face=False)
     players = [RandomPlayer() for _ in range(n)]
-    players[0] = HumanPlayer()
+    #players[0] = HumanPlayer()
     for i in range(n):
         game.register(i, players[i])
     import time
@@ -558,12 +599,11 @@ if __name__ == "__main__":
     print("time elapsed: %.2f seconds" %(t2 - t1))
 
     # load the same game configuration
-    """
-    n, civs, faces, deck = game.export()
-    game2 = Game(n, civs=civs, faces=faces, deck=deck)
+    #"""
+    n, civs, faces, deck, random_face = game.export()
+    game2 = Game(n, civs=civs, faces=faces, deck=deck, random_face=random_face)
     players = [RandomPlayer() for _ in range(n)]
     for i in range(n):
         game2.register(i, players[i])
     game2.run()
-    """
-
+    #"""
