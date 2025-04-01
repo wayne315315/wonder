@@ -2,6 +2,7 @@ from pathlib import Path
 import random
 import itertools
 
+from tqdm import tqdm
 import tensorflow as tf
 
 from helper import Adaptor, CARDS, Action
@@ -68,41 +69,71 @@ def translate(episode, gamma=0.9, penalty=-1.0):
     hs = tf.ragged.constant(hs, dtype=tf.int32)
     hs = hs.to_tensor()
     ys = tf.constant(ys, dtype=tf.int32)
-    rs = tf.constant(rs, dtype=tf.float64)
+    rs = tf.constant(rs, dtype=tf.float32)
     return vs, hs, ys, rs
         
-def compute_loss(logits, values, ys, rs):
+def compute_metrics(logits, values, actions, rewards):
     # inputs : v, h, y_true -> outputs : p(a|s), v(s)
     # inputs : rewards -> outputs: g(a,s)
     # loss_actor = -log(p(a|s)) * (g(a,s) - v(s))
     # loss_critic = huber_loss(g(a,s), v(s))
     # loss = loss_actor + loss_critic
-    pass
+    # tf.gather(x, y, batch_dims=1)
+    # TensorShape([None, 231]) TensorShape([None, 1]) TensorShape([None]) TensorShape([None])
+    huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
+    values = values[:,0] # v(s) TensorShape([None])
+    loss_critic = huber_loss(rewards, values) # TensorShape([])
+    advantages = rewards - values # (g(a,s) - v(s))  TensorShape([None])
+    softmax = tf.nn.softmax(logits, axis=1) # p(a|s) TensorShape([None, 231])
+    softmax = tf.gather(softmax, actions, batch_dims=1) # p(a|s) TensorShape([None])
+    #loss_actor = -tf.reduce_sum(softmax * advantages) # -p(a|s) * (g(a,s) - v(s)) TensorShape([None])
+    smooth_log_softmax = tf.math.log(softmax +1.0)
+    loss_actor = -tf.reduce_sum(smooth_log_softmax * advantages)
+    #logsoftmax = tf.nn.log_softmax(logits, axis=1) # log(p(ai|s), ...) TensorShape([None, 231])
+    #logsoftmax = tf.gather(logsoftmax, actions, batch_dims=1) # log(p(a|s)) TensorShape([None])
+    #loss_actor = -tf.reduce_sum(logsoftmax  * advantages) # TensorShape([])
+    loss = loss_actor + loss_critic # TensorShape([])
+    return loss, loss_actor, loss_critic
 
-def train(model, optimizer, num_play, num_game, gamma=0.9, penalty=-1.0):
+def compute_loss(logits, values, actions, rewards):
+    loss, _, _ = compute_metrics(logits, values, actions, rewards)
+    return loss
+
+def train(model, optimizer, epoch, num_play, num_game, gamma=0.9, penalty=-1.0):
     input_signature = (
         tf.TensorSpec(shape=[None, None, 6], dtype=tf.int32), # vs
         tf.TensorSpec(shape=[None, None], dtype=tf.int32), # hs
         tf.TensorSpec(shape=[None], dtype=tf.int32), # ys
-        tf.TensorSpec(shape=[None], dtype=tf.float64) # rs
+        tf.TensorSpec(shape=[None], dtype=tf.float32) # rs
     )
     @tf.function(input_signature=input_signature)
     def train_step(vs, hs, ys, rs):
-        #tf.print(vs.shape, hs.shape, ys.shape, rs.shape)
-        policy, value = model(vs, hs)
-        tf.print(policy.shape, value.shape)
+        with tf.GradientTape() as tape:
+            logits, values = model(vs, hs)
+            loss = compute_loss(logits, values, ys, rs)
+        grads = tape.gradient(loss, model.trainable_variables)
+        optimizer.apply_gradients(zip(grads, model.trainable_variables))
     # training loop
-    for episode in data_gen(num_play, num_game):
-        vs, hs, ys, rs = translate(episode, gamma=gamma, penalty=penalty)
-        train_step(vs, hs, ys, rs)
-
+    for e in range(epoch):
+        for episode in tqdm(data_gen(num_play, num_game), total=25*num_play*num_game):
+            vs, hs, ys, rs = translate(episode, gamma=gamma, penalty=penalty)
+            train_step(vs, hs, ys, rs)
+        # save model
+        logits, values = model(vs, hs)
+        loss, loss_actor, loss_critic = compute_metrics(logits, values, ys, rs)
+        print("epoch:", e)
+        print("loss:", loss.numpy(), loss_actor.numpy(), loss_critic.numpy())
+        model_path = Path("model", "ac.keras")
+        model.save(model_path)
+        print("model saved")
 
 if __name__ == "__main__":
+    epoch = 1000
     num_play = 2 # The number of rehearsals for each game
     num_game = 2 # The number of games for each number of the total players
     # model
     model_path = Path("model", "ac.keras")
     model = tf.keras.models.load_model(model_path)
     # optimizer
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-    train(model, optimizer, num_play, num_game)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+    train(model, optimizer, epoch, num_play, num_game)

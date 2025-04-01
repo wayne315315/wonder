@@ -21,6 +21,7 @@ def get_reward(scores, exp=2):
     y = np.asarray(y)
     y = np.sign(y) * np.power(np.abs(y), exp)
     y = y / np.std(y)
+    y += np.log(1 + np.asarray(scores["total"])) # encourage to pursue higher score
     reward = y[0]
     return reward
 
@@ -86,8 +87,8 @@ if __name__ == "__main__":
     from tqdm import tqdm
     from helper import Adaptor
     adaptor = Adaptor()
-    num_play = 2 # The number of rehearsals for each game
-    num_game = 2 # The number of games for each number of the total players
+    num_play = 10 # The number of rehearsals for each game
+    num_game = 30 # The number of games for each number of the total players
     data = data_gen(num_play, num_game)
     for episode in tqdm(data, total=num_play * num_game * 25):
         rec_valid, rec_invalid = episode

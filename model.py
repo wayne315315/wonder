@@ -292,7 +292,7 @@ class Transformer(tf.keras.Model):
 
 @tf.keras.utils.register_keras_serializable()
 class ActorCritic(tf.keras.Model):
-    def __init__(self, num_card, d_final, d_model=512, d_ff=128, num_heads=8, num_layers=4, dropout_rate=0.1, *args, **kwargs):
+    def __init__(self, num_card, d_final, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_card = num_card
         self.d_final = d_final
