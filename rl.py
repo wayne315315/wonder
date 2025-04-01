@@ -20,7 +20,7 @@ class AIPlayer(Player):
         if not asked:
             v = self.helper.s2v(state, record) # shape (18 * n + 6, 6)
             h = self.helper.h2v(hand)
-            self.buffer = self.model.predict_move(v, h)[0].tolist()
+            self.buffer = self.model.predict_move(v, h).numpy()[0].tolist()
         else:
             self.record[-1][-1] = False # last move is invalid
 
@@ -39,10 +39,17 @@ class AIPlayer(Player):
 
 
 if __name__ == "__main__":
+    from pathlib import Path
     import tensorflow as tf
     from player import RandomPlayer
     from model import ActorCritic
     from game import Game, CARDS
+
+    model_dir = Path("model")
+    if not model_dir.exists():
+        model_dir.mkdir()
+    model_path = Path(model_dir, "toy.keras")
+
     model = ActorCritic(len(CARDS), 100)
     n = 3
     game = Game(n)
@@ -52,11 +59,10 @@ if __name__ == "__main__":
         game.register(i, players[i])
 
     game.run()
-    model.summary()
-    model.save("ac.keras")
+    model.save(model_path)
     ####
     print("load model")
-    new_model = tf.keras.models.load_model('ac.keras')
+    new_model = tf.keras.models.load_model(model_path)
     game = Game(n, random_face=False)
     players = [RandomPlayer() for _ in range(n)]
     players[0] = AIPlayer(new_model)
@@ -64,4 +70,3 @@ if __name__ == "__main__":
         game.register(i, players[i])
 
     game.run()
-    model.summary()

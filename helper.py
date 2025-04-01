@@ -56,13 +56,16 @@ class Adaptor:
         m = 19 * n + 6 - len(v) # max total : Prime turn n + 18 turn * n player + 3 extra turn (Babylon) + 3 extra turn (Halikarnassos)
         for _ in range(m):
             v.append([19, 0, 0, n, 0, 0])
-        v = np.asarray(v)
-        v = np.expand_dims(v, axis=0)
+        v = np.asarray(v, dtype=np.int32)
+        v = np.expand_dims(v, axis=0) # batch
         return v
     
     def h2v(self, hand):
-        h = np.asarray([self.card2idx[card] for card in hand])
-        h = np.expand_dims(h, axis=0)
+        # padding hand number to 7
+        if len(hand) < 7:
+            hand = hand + [None] * (7 - len(hand))
+        h = np.asarray([self.card2idx[card] for card in hand], dtype=np.int32)
+        h = np.expand_dims(h, axis=0) # batch
         return h
     
     def c2v(self, coins):

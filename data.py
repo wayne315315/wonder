@@ -1,12 +1,11 @@
 import random
-import itertools
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 
 from player import RandomPlayer
-from game import Game, CARDS, Action
+from game import Game
 
 
 def get_reward(scores, exp=2):
@@ -36,20 +35,11 @@ def extract(history):
         for rec in history[i]:
             api, args, res, is_valid = rec
             if is_valid == True:
-                rec = (api, args, res, reward)
+                rec = [api, args, res, reward]
                 rec_valid[i].append(rec) # rec: (api, args, res, reward)
             else:
-                rec = (api, args, res)
+                rec = [api, args, res]
                 rec_invalid[i].append(rec) # rec: (api, args, res)
-    # collect non-hand invalid history
-    for i in range(n):
-        for api, args, res, reward in rec_valid[i]:
-            if api == "move":
-                state, record, hand = args
-                others = set(CARDS) - set(hand) # other cards not in hand
-                for pick, action in itertools.product(others, Action):
-                    rec = (api, args, [pick, action]) # illegal move
-                    rec_invalid[i].append(rec) # rec: (api, args, res)
     episodes = [(rec_valid[i], rec_invalid[i]) for i in range(n)]
     return episodes
 

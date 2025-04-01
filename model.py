@@ -23,14 +23,14 @@ class StateEmbedding(tf.keras.layers.Layer):
         self.card_emb = hand_emb # padding value 0
         self.action_emb = tf.keras.layers.Embedding(4, d_model) # padding value 0
         self.offset = tf.lookup.StaticHashTable(tf.lookup.KeyValueTensorInitializer(
-            tf.constant([3,4,5,6,7]), 
-            tf.constant([0,4,9,15,22])),
+            tf.constant([3,4,5,6,7], dtype=tf.int32), 
+            tf.constant([0,4,9,15,22], dtype=tf.int32)),
             default_value=-100
             )
 
     def call(self, x):
         n = (tf.shape(x)[-2] - 6) // 19
-        o = int(self.offset.lookup(n).numpy())
+        o = self.offset.lookup(n)
         # (turn, card, action, pos, civ, face)
         turn_emb = self.turn_emb(x[:, :, 0])
         card_emb = self.card_emb(x[:, :, 1])
@@ -330,5 +330,6 @@ class ActorCritic(tf.keras.Model):
         # http://amid.fish/humble-gumbel
         noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(policy))))
         logits = policy + noise
-        moves = tf.argsort(logits, axis=-1, direction='ASCENDING').numpy()
+        #moves = tf.argsort(logits, axis=-1, direction='ASCENDING').numpy()
+        moves = tf.argsort(logits, axis=-1, direction='ASCENDING')
         return moves
