@@ -202,7 +202,7 @@ class Game:
     def recv_face(self, i):
         player = self.players[i]
         # initialize the state
-        state = [
+        state_og = [
             {
                 "civ": name, 
                 "face": None, 
@@ -220,9 +220,10 @@ class Game:
         ]
         # player-centric state
         for _ in range(i):
-            state.append(state.pop(0))
+            state_og.append(state_og.pop(0))
         # ask player
         while True:
+            state = deepcopy(state_og)
             face = player.send_face(state)
             if face in ["Day", "Night"]:
                 break
@@ -230,22 +231,25 @@ class Game:
     
     def recv_move(self, i, scavenge=False):
         player = self.players[i]
-        hand = deepcopy(self.hands[i]) if not scavenge else deepcopy(self.discard)
-        record = deepcopy(self.record[i])
-        state = deepcopy(self.state)
+        hand_og = deepcopy(self.hands[i]) if not scavenge else deepcopy(self.discard)
+        record_og = deepcopy(self.record[i])
+        state_og = deepcopy(self.state)
         # player-centric state
         for _ in range(i):
-            state.append(state.pop(0))
+            state_og.append(state_og.pop(0))
         # shuffle the hand to avoid information leakage
-        random.shuffle(hand)
+        random.shuffle(hand_og)
 
         asked = False
         # ask player to make the move, repeat until the player make a legit move
         while True:
+            state = deepcopy(state_og)
+            record = deepcopy(record_og)
+            hand = deepcopy(hand_og)
             pick, action = player.send_move(state, record, hand, asked)
             asked = True
             # Ensure no illegal pick or action
-            if pick not in hand or action not in list(Action):
+            if pick not in hand_og or action not in list(Action):
                 continue
             # Ensure no wonder built in scavenging round
             if scavenge and action == Action.WONDER:
@@ -258,12 +262,18 @@ class Game:
             free |= scavenge
 
             # check if the player has enough coins to trade
-            coins = self.coin_trade(i, pick, action, free)
-            if coins is not None:
+            coins_og = self.coin_trade(i, pick, action, free)
+            if coins_og is not None:
                 break
 
         # coin trade
-        trade = player.send_trade(state, record, coins) if coins else (0, 0)
+        while True:
+            state = deepcopy(state_og)
+            record = deepcopy(record_og)
+            coins = deepcopy(coins_og)
+            trade = player.send_trade(state, record, coins) if coins else (0, 0)
+            if trade in coins_og or trade == (0, 0):
+                break
         return pick, action, trade
     
     def update(self, moves, scavenge=False):
