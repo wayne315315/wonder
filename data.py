@@ -5,10 +5,11 @@ from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 
 from player import RandomPlayer
+from rl import AIPlayer
 from game import Game
 
 
-def get_reward(scores, exp=2):
+def get_reward_old(scores, exp=2):
     x = list(zip(scores["total"], scores["coin"])) # eg. [(42, 4), (61,2), (42, 5)]
     n = len(x)
     y = [0] * n
@@ -23,6 +24,23 @@ def get_reward(scores, exp=2):
     y = y / np.std(y)
     y += np.log(1 + np.asarray(scores["total"])) # encourage to pursue higher score
     reward = y[0]
+    return reward
+
+def get_reward(scores):
+    totals, coins = scores["total"], scores["coin"]
+    x = list(zip(totals, coins)) # eg. [(42, 4), (61,2), (42, 5)]
+    n = len(x)
+    y = [0] * n
+    for i in range(n):
+        for j in range(n):
+            if x[i] > x[j]:
+                y[i] += 1
+            elif x[i] < x[j]:
+                y[i] -= 1
+    y = np.asarray(y)
+    y = np.sign(y) * np.power(np.abs(y), 2)
+    reward = y[0] + sum([totals[0] - totals[i] for i in range(n)])
+    reward /= n
     return reward
 
 def extract(history):
@@ -44,10 +62,13 @@ def extract(history):
     episodes = [(rec_valid[i], rec_invalid[i]) for i in range(n)]
     return episodes
 
-def epi_gen(args):
-    n, num_play = args
+def epi_gen(arg):
+    n, num_play, *extras = arg
     game = Game(n, random_face=False)
     players = [RandomPlayer() for _ in range(n)]
+    if extras:
+        model = extras[0]
+        players[0] = AIPlayer(model)
     episodes = []
     for i, player in enumerate(players):
         game.register(i, player)
@@ -57,13 +78,13 @@ def epi_gen(args):
     random.shuffle(episodes)
     return episodes
 
-def data_gen(num_play, num_game, shard=10, size=100):
+def data_gen(num_play, num_game, model=None, shard=5, size=5, max_workers=None):
     data = [[] for _ in range(shard)]
-    args = [(n, num_play) for n in range(3,8) for _ in range(num_game)]
+    args = [(n, num_play, model) if model else (n, num_play) for n in range(3,8) for _ in range(num_game)]
     random.shuffle(args)
-    with ProcessPoolExecutor() as executor:
-        for episodes in executor.map(epi_gen, args):
-            for episode in episodes:
+    if model:
+        for arg in args:
+            for episode in epi_gen(arg):
                 i = random.randint(0, shard-1)
                 data[i].append(episode)
                 # shard reach size
@@ -71,6 +92,17 @@ def data_gen(num_play, num_game, shard=10, size=100):
                     random.shuffle(data[i])
                     while data[i]:
                         yield data[i].pop()
+    else:
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            for episodes in executor.map(epi_gen, args):
+                for episode in episodes:
+                    i = random.randint(0, shard-1)
+                    data[i].append(episode)
+                    # shard reach size
+                    if len(data[i]) >= size:
+                        random.shuffle(data[i])
+                        while data[i]:
+                            yield data[i].pop()
     random.shuffle(data)
     for datum in data:
         random.shuffle(datum)

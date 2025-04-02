@@ -22,6 +22,7 @@ class StateEmbedding(tf.keras.layers.Layer):
         self.face_emb = tf.keras.layers.Embedding(3, d_model) # padding value 0
         self.card_emb = hand_emb # padding value 0
         self.action_emb = tf.keras.layers.Embedding(4, d_model) # padding value 0
+        self.coin_emb = tf.keras.layers.Dense(d_model) # padding value -1
         self.offset = tf.lookup.StaticHashTable(tf.lookup.KeyValueTensorInitializer(
             tf.constant([3,4,5,6,7], dtype=tf.int32), 
             tf.constant([0,4,9,15,22], dtype=tf.int32)),
@@ -31,14 +32,15 @@ class StateEmbedding(tf.keras.layers.Layer):
     def call(self, x):
         n = (tf.shape(x)[-2] - 6) // 19
         o = self.offset.lookup(n)
-        # (turn, card, action, pos, civ, face)
+        # (turn, card, action, pos, civ, face, coin)
         turn_emb = self.turn_emb(x[:, :, 0])
         card_emb = self.card_emb(x[:, :, 1])
         action_emb = self.action_emb(x[:, :, 2])
         pos_emb = self.pos_emb(x[:, :, 3] + o)
         civ_emb = self.civ_emb(x[:, :, 4])
         face_emb = self.face_emb(x[:, :, 5])
-        total_emb = turn_emb + card_emb + action_emb + pos_emb + civ_emb + face_emb # (bash, 19*n+6, d_model)
+        coin_emb = self.coin_emb(x[:, :, 6:])
+        total_emb = turn_emb + card_emb + action_emb + pos_emb + civ_emb + face_emb + coin_emb # (batch, 19*n+6, d_model)
         return total_emb
     
     def get_config(self):
@@ -303,7 +305,9 @@ class ActorCritic(tf.keras.Model):
         self.dropout_rate = dropout_rate
         self.common = Transformer(num_layers=num_layers, d_model=d_model, num_heads=num_heads, d_ff=d_ff, num_card=num_card, d_final=d_final, dropout_rate=dropout_rate)
         self.actor = tf.keras.layers.Dense(num_card * 3)
-        self.critic =tf.keras.layers.Dense(1)
+        self.critic = tf.keras.layers.Dense(1)
+        # introduce bias to discourage discarding
+        self.bias = tf.constant([[-1e9 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32) 
 
     def get_config(self):
         config = super().get_config()
@@ -320,10 +324,11 @@ class ActorCritic(tf.keras.Model):
 
     def call(self, states, hands):
         features = self.common(states, hands)
-        policy = self.actor(features) # logits
+        policy = self.actor(features) + self.bias # include bias into logits to discourage discarding
         value = self.critic(features) # expected return
         return policy, value
     
+    @tf.function
     def predict_move(self, states, hands):
         policy, value = self(states, hands)
         # gumbel max trick to sample from policy distribution without replacement

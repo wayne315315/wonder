@@ -558,7 +558,7 @@ class Game:
         # Calculate score
         scores = self.calculate()
         # Show score
-        items = ["civilian", "conflict", "science", "commerce", "guild", "wonder", "wealth", "total", "coin"]
+        items = ["civilian", "conflict", "science", "commerce", "guild", "wonder", "wealth", "coin", "total"]
         for i in range(self.n):
             state = self.state[i]
             color_num = self.color[i]

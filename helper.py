@@ -19,43 +19,46 @@ class Adaptor:
     def s2v(self, state, record):
         # determine the number of players
         n = len(state)
-        # (turn, card, action, pos, civ, face)
+        # (turn, card, action, pos, civ, face, coin)
         v = []
         # priming
         for pos, s in enumerate(state):
+            coin = s["coin"]
             i_civ = self.civ2idx[s["civ"]]
             i_face = self.face2idx[s["face"]]
-            v.append([0, 0, 0, pos, i_civ, i_face])
+            v.append([0, 0, 0, pos, i_civ, i_face, coin])
         # other players
         for pos, s in enumerate(state):
+            coin = s["coin"]
             i_civ = self.civ2idx[s["civ"]]
             i_face = self.face2idx[s["face"]]
             if pos:
                 for turn, card in s["built"]:
                     i_card = self.card2idx[card]
                     i_action = self.action2idx[Action.BUILD]
-                    v.append([turn, i_card, i_action, pos, i_civ, i_face])
+                    v.append([turn, i_card, i_action, pos, i_civ, i_face, coin])
                 for turn in s["wonder"]:
                     i_card = self.card2idx[None] # 0
                     i_action = self.action2idx[Action.WONDER]
-                    v.append([turn, i_card, i_action, pos, i_civ, i_face])
+                    v.append([turn, i_card, i_action, pos, i_civ, i_face, coin])
                 for turn in s["discard"]:
                     i_card = self.card2idx[None]
                     i_action = self.action2idx[Action.DISCARD]
-                    v.append([turn, i_card, i_action, pos, i_civ, i_face])
+                    v.append([turn, i_card, i_action, pos, i_civ, i_face, coin])
             else:
+                coin_player = s["coin"]
                 i_civ_player = self.civ2idx[s["civ"]]
                 i_face_player = self.face2idx[s["face"]]
         # player itself
         for turn, card, action, hand in record:
             i_card = self.card2idx[card]
             i_action = self.action2idx[action]
-            v.append([turn, i_card, i_action, 0, i_civ_player, i_face_player])
+            v.append([turn, i_card, i_action, 0, i_civ_player, i_face_player, coin_player])
         # padding
-        # (turn, card, action, pos, civ, face)
+        # (turn, card, action, pos, civ, face, coin)
         m = 19 * n + 6 - len(v) # max total : Prime turn n + 18 turn * n player + 3 extra turn (Babylon) + 3 extra turn (Halikarnassos)
         for _ in range(m):
-            v.append([19, 0, 0, n, 0, 0])
+            v.append([19, 0, 0, n, 0, 0, -1])
         v = np.asarray(v, dtype=np.int32)
         v = np.expand_dims(v, axis=0) # batch
         return v

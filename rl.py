@@ -18,7 +18,7 @@ class AIPlayer(Player):
 
     def send_move(self, state, record, hand, asked):
         if not asked:
-            v = self.helper.s2v(state, record) # shape (18 * n + 6, 6)
+            v = self.helper.s2v(state, record) # shape (19 * n + 6, 7)
             h = self.helper.h2v(hand)
             self.buffer = self.model.predict_move(v, h).numpy()[0].tolist()
         else:
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         model_dir.mkdir()
     model_path = Path(model_dir, "toy.keras")
 
-    model = ActorCritic(len(CARDS), 100)
+    model = ActorCritic(len(CARDS), 128)
     n = 3
     game = Game(n)
     players = [RandomPlayer() for _ in range(n)]
