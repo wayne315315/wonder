@@ -9,10 +9,10 @@ from helper import Adaptor, CARDS, Action
 from data import data_gen
 
 
-def create_model(num_feature=128):
+def create_model():
     from model import ActorCritic
     from game import CARDS
-    model = ActorCritic(len(CARDS), num_feature)
+    model = ActorCritic(len(CARDS))
     return model
 
 def translate(episode, gamma=0.9, penalty=-1.0):
@@ -71,7 +71,7 @@ def translate(episode, gamma=0.9, penalty=-1.0):
     rs = tf.constant(rs, dtype=tf.float32)
     return vs, hs, ys, rs
         
-def compute_metrics(logits, values, actions, rewards):
+def compute_loss(logits, values, actions, rewards):
     # inputs : v, h, y_true -> outputs : p(a|s), v(s)
     # inputs : rewards -> outputs: g(a,s)
     # loss_actor = -log(p(a|s)) * (g(a,s) - v(s))
@@ -83,24 +83,18 @@ def compute_metrics(logits, values, actions, rewards):
     values = values[:,0] # v(s) TensorShape([None])
     loss_critic = huber_loss(rewards, values) # TensorShape([])
     advantages = rewards - values # (g(a,s) - v(s))  TensorShape([None])
-    softmax = tf.nn.softmax(logits, axis=1) # p(a|s) TensorShape([None, 231])
-    softmax = tf.gather(softmax, actions, batch_dims=1) # p(a|s) TensorShape([None])
-    #loss_actor = -tf.reduce_mean(softmax * advantages) # -p(a|s) * (g(a,s) - v(s)) TensorShape([None])
-    smooth_log_softmax = tf.math.log(softmax +1.0)
-    loss_actor = -tf.reduce_mean(smooth_log_softmax * advantages)
-    #loss_actor = -tf.reduce_mean(smooth_log_softmax * rewards)
-    #logsoftmax = tf.nn.log_softmax(logits, axis=1) # log(p(ai|s), ...) TensorShape([None, 231])
-    #logsoftmax = tf.gather(logsoftmax, actions, batch_dims=1) # log(p(a|s)) TensorShape([None])
-    #loss_actor = -tf.reduce_mean(logsoftmax * advantages) # TensorShape([])
-    #loss_actor = -tf.reduce_mean(logsoftmax * rewards)
-    loss = loss_actor + loss_critic # TensorShape([])
+    logsoftmax = tf.nn.log_softmax(logits, axis=1) # log(p(ai|s), ...) TensorShape([None, 231])
+    logsoftmax = tf.gather(logsoftmax, actions, batch_dims=1) # log(p(a|s)) TensorShape([None])
+    loss_actor = -tf.reduce_mean(logsoftmax * advantages)
+    loss = loss_critic + loss_actor
     return loss, loss_actor, loss_critic
 
-def compute_loss(logits, values, actions, rewards):
-    loss, _, _ = compute_metrics(logits, values, actions, rewards)
-    return loss
+def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-10.0, run_episode=True):
+    # model
+    model = tf.keras.models.load_model(model_path) if model_path.exists() else create_model()
+    # optimizer
+    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
 
-def train(model, optimizer, epoch, num_play, num_game, gamma=0.99, penalty=-10.0, run_episode=True):
     input_signature = (
         tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32), # vs
         tf.TensorSpec(shape=[None, None], dtype=tf.int32), # hs
@@ -111,26 +105,22 @@ def train(model, optimizer, epoch, num_play, num_game, gamma=0.99, penalty=-10.0
     def train_step(vs, hs, ys, rs):
         with tf.GradientTape() as tape:
             logits, values = model(vs, hs)
-            loss, loss_actor, loss_critic = compute_metrics(logits, values, ys, rs) ###
+            loss, _, _ = compute_loss(logits, values, ys, rs)
         grads = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
-        return loss, loss_actor, loss_critic
+        return loss
     # training loop
     for e in range(epoch):
         losses = []
-        losses_actor = []
-        losses_critic = []
         data_iterator = data_gen(num_play, num_game, model=model) if run_episode else data_gen(num_play, num_game)
         for episode in tqdm(data_iterator, total=25*num_play*num_game):
             vs, hs, ys, rs = translate(episode, gamma=gamma, penalty=penalty)
-            loss, loss_actor, loss_critic = train_step(vs, hs, ys, rs)
+            loss = train_step(vs, hs, ys, rs)
             losses.append(loss.numpy())
-            losses_actor.append(loss_actor.numpy())
-            losses_critic.append(loss_critic.numpy())
         # save model
+        loss_avg = sum(losses)/len(losses)
         print("epoch:", e)
-        print("losses: %.2f ; loss_actor: %.2f ; loss_critic: %.2f" % (sum(losses)/len(losses), sum(losses_actor)/len(losses_actor), sum(losses_critic)/len(losses_critic)))
-        model_path = Path("model", "ac.keras")
+        print("losses: %.2E" % loss_avg)
         model.save(model_path)
         print("model saved")
 
@@ -139,8 +129,8 @@ if __name__ == "__main__":
     num_play = 8 # The number of rehearsals for each game
     num_game = 8 # The number of games for each number of the total players
     # model
-    model_path = Path("model", "ac.keras")
-    model = tf.keras.models.load_model(model_path)
-    # optimizer
-    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
-    train(model, optimizer, epoch, num_play, num_game)
+    model_dir = Path("model")
+    if not model_dir.exists():
+        model_dir.mkdir()
+    model_path = Path(model_dir, "ac.keras")
+    train(model_path, epoch, num_play, num_game)

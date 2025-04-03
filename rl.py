@@ -50,7 +50,7 @@ if __name__ == "__main__":
         model_dir.mkdir()
     model_path = Path(model_dir, "toy.keras")
 
-    model = ActorCritic(len(CARDS), 128)
+    model = ActorCritic(len(CARDS))
     n = 3
     game = Game(n)
     players = [RandomPlayer() for _ in range(n)]

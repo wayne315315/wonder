@@ -294,7 +294,7 @@ class Transformer(tf.keras.Model):
 
 @tf.keras.utils.register_keras_serializable()
 class ActorCritic(tf.keras.Model):
-    def __init__(self, num_card, d_final, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.1, *args, **kwargs):
+    def __init__(self, num_card, d_final=128, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_card = num_card
         self.d_final = d_final
@@ -330,11 +330,10 @@ class ActorCritic(tf.keras.Model):
     
     @tf.function
     def predict_move(self, states, hands):
-        policy, value = self(states, hands)
+        policy, _ = self(states, hands)
         # gumbel max trick to sample from policy distribution without replacement
         # http://amid.fish/humble-gumbel
         noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(policy))))
         logits = policy + noise
-        #moves = tf.argsort(logits, axis=-1, direction='ASCENDING').numpy()
         moves = tf.argsort(logits, axis=-1, direction='ASCENDING')
         return moves
