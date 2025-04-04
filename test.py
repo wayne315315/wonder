@@ -19,7 +19,7 @@ def test(modelpath, num_play=10, num_game=10):
                 game.register(i, players[i])
             # run same game multiple times
             for _ in range(num_play):
-                history = game.run(verbose=10)
+                history = game.run(verbose=20)
                 _, [scores, *_], _, _ = history[0].pop()
                 total = scores["total"]
                 rank = [0] * n

@@ -325,21 +325,15 @@ class ActorCritic(tf.keras.Model):
     @tf.function
     def hands2mask(self, hands):
         batch = tf.shape(hands)[0]
-        hands = tf.RaggedTensor.from_tensor(hands, padding=0)
         hands -= 1
         hands *= 3
         hands = tf.concat([hands + i for i in range(3)], axis=1)
-        sig = tf.RaggedTensorSpec(shape = (None,2), dtype=tf.int32, ragged_rank = 1)
-        indices = tf.map_fn(
-            fn=lambda i: tf.RaggedTensor.from_tensor(tf.map_fn(
-                fn=lambda card: tf.stack([i, card]), 
-                elems=hands[i])), 
-            elems=tf.range(batch), 
-            fn_output_signature=sig
-            )
-        indices = tf.reshape(indices.flat_values, [-1,2])
+        indices = tf.map_fn(fn=lambda i: tf.map_fn(fn=lambda card: tf.stack([i, card]), elems=hands[i]), elems=tf.range(batch))
+        indices = tf.reshape(indices, [-1,2])
+        # filter out invalid indices
+        indices = tf.boolean_mask(indices, indices[:, 1] >= 0)
         updates = tf.ones_like(indices[:,0], dtype=tf.float32)
-        shape = tf.stack([batch, 231])
+        shape = tf.stack([batch, self.num_card * 3])
         scatter = tf.scatter_nd(indices, updates, shape) - 1.0
         bias = scatter * 1e9
         return bias
