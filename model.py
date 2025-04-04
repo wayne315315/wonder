@@ -321,10 +321,34 @@ class ActorCritic(tf.keras.Model):
             'dropout_rate': self.dropout_rate
         })
         return config
+    
+    @tf.function
+    def hands2mask(self, hands):
+        batch = tf.shape(hands)[0]
+        hands = tf.RaggedTensor.from_tensor(hands, padding=0)
+        hands -= 1
+        hands *= 3
+        hands = tf.concat([hands + i for i in range(3)], axis=1)
+        sig = tf.RaggedTensorSpec(shape = (None,2), dtype=tf.int32, ragged_rank = 1)
+        indices = tf.map_fn(
+            fn=lambda i: tf.RaggedTensor.from_tensor(tf.map_fn(
+                fn=lambda card: tf.stack([i, card]), 
+                elems=hands[i])), 
+            elems=tf.range(batch), 
+            fn_output_signature=sig
+            )
+        indices = tf.reshape(indices.flat_values, [-1,2])
+        updates = tf.ones_like(indices[:,0], dtype=tf.float32)
+        shape = tf.stack([batch, 231])
+        scatter = tf.scatter_nd(indices, updates, shape) - 1.0
+        bias = scatter * 1e9
+        return bias
 
     def call(self, states, hands):
         features = self.common(states, hands)
         policy = self.actor(features) + self.bias # include bias into logits to discourage discarding
+        mask = self.hands2mask(hands)
+        policy += mask # apply hand mask, silent non-hand cards by adding -1e9 to their logits
         value = self.critic(features) # expected return
         return policy, value
     

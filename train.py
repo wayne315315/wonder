@@ -24,6 +24,7 @@ def translate(episode, gamma=0.9, penalty=-1.0):
     # Task 2 : remove all record which api call is not 'move'
     rec_valid = [rec for rec in rec_valid if rec[0] == "move"]
     # Task 3 : generate illegal examples from rec_valid (pick card not in hand)
+    """
     num_per_state = 1 if rec_invalid else 2
     rec_illegal = []
     for _ in range(num_per_state):
@@ -31,7 +32,8 @@ def translate(episode, gamma=0.9, penalty=-1.0):
             _, _, hand = args
             others = set(CARDS) - set(hand)
             pick, action = random.choice(list(itertools.product(others, Action)))
-            rec_illegal.append([api, args, [pick, action], penalty]) # illegal move
+            rec_illegal.append([api, args, [pick, action], penalty]) # illegal move"
+    """
     # Task 4 : add penalty to rec_invalid & sample n examples from rec_invalid
     if rec_invalid:
         rec_invalid_ = [[rec[0], rec[1], rec[2], penalty] for rec in rec_invalid]
@@ -47,7 +49,8 @@ def translate(episode, gamma=0.9, penalty=-1.0):
                 rec_invalid += rec_invalid_[:n]
                 n = 0
     # Task 5 : Collect all records (valid : invalid : illegal = 1 : 1 : 1)
-    recs = rec_valid + rec_invalid + rec_illegal
+    #recs = rec_valid + rec_invalid + rec_illegal
+    recs = rec_valid + rec_invalid
     # Task 6 : convert state, record, hand to v, h; pick, action to y
     adaptor = Adaptor()
     vs = []
@@ -94,7 +97,7 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-10.0, run_
     model = tf.keras.models.load_model(model_path) if model_path.exists() else create_model()
     # optimizer
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
-
+    # train_step
     input_signature = (
         tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32), # vs
         tf.TensorSpec(shape=[None, None], dtype=tf.int32), # hs
