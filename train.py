@@ -108,22 +108,30 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-10.0, run_
     def train_step(vs, hs, ys, rs):
         with tf.GradientTape() as tape:
             logits, values = model(vs, hs)
-            loss, _, _ = compute_loss(logits, values, ys, rs)
+            loss, loss_actor, loss_critic = compute_loss(logits, values, ys, rs)
         grads = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
-        return loss
+        return loss, loss_actor, loss_critic
     # training loop
     for e in range(epoch):
         losses = []
+        losses_actor = []
+        losses_critic = []
         data_iterator = data_gen(num_play, num_game, model=model) if run_episode else data_gen(num_play, num_game)
         for episode in tqdm(data_iterator, total=25*num_play*num_game):
             vs, hs, ys, rs = translate(episode, gamma=gamma, penalty=penalty)
-            loss = train_step(vs, hs, ys, rs)
+            loss, loss_actor, loss_critic = train_step(vs, hs, ys, rs)
             losses.append(loss.numpy())
+            losses_actor.append(loss_actor.numpy())
+            losses_critic.append(loss_critic.numpy())
         # save model
         loss_avg = sum(losses)/len(losses)
+        loss_actor_avg = sum(losses_actor)/len(losses_actor)
+        loss_critic_avg = sum(losses_critic)/len(losses_critic)
         print("epoch:", e)
-        print("losses: %.2E" % loss_avg)
+        print("loss: %.2E" % loss_avg)
+        print("loss actor: %.2E" % loss_actor_avg)
+        print("loss critic: %.2E" % loss_critic_avg)
         model.save(model_path)
         print("model saved")
 
