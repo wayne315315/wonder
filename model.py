@@ -254,7 +254,7 @@ class Transformer(tf.keras.Model):
                             num_heads=num_heads, d_ff=d_ff,
                             hand_emb=hand_emb,
                             dropout_rate=dropout_rate)
-        self.final_layer = tf.keras.layers.Dense(d_final, activation='relu')
+        self.final_layer = tf.keras.layers.Dense(d_final)
 
     def get_config(self):
         config = super().get_config()
@@ -269,21 +269,12 @@ class Transformer(tf.keras.Model):
         })
         return config
     
-    def call(self, *inputs):
-        state, hand = inputs
+    def call(self, state, hand):
         context = self.encoder(state)  # (batch_size, 18*n+6, d_model)
         x = self.decoder(hand, context)  # (batch_size, num_hand, d_model)
         # Final linear layer output.
         x = tf.reduce_sum(x, axis=1)  # (batch_size, d_model)
         features = self.final_layer(x) # (batch_size, d_final)
-        """
-        print("")
-        print("state", state.shape)
-        print("hand", hand.shape)
-        print("context", context.shape)
-        print("x", x.shape)
-        print("features", features.shape)
-        """
         try:
             # Drop the keras mask, so it doesn't scale the losses/metrics.
             # b/250038731
@@ -307,7 +298,7 @@ class ActorCritic(tf.keras.Model):
         self.actor = tf.keras.layers.Dense(num_card * 3)
         self.critic = tf.keras.layers.Dense(1)
         # introduce bias to discourage discarding
-        self.bias = tf.constant([[-1e9 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32) 
+        self.bias = tf.constant([[-1e1 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32) 
 
     def get_config(self):
         config = super().get_config()
@@ -332,6 +323,7 @@ class ActorCritic(tf.keras.Model):
         indices = tf.reshape(indices, [-1,2])
         # filter out invalid indices
         indices = tf.boolean_mask(indices, indices[:, 1] >= 0)
+        indices, _ = tf.raw_ops.UniqueV2(x=indices, axis=tf.constant([0]))
         updates = tf.ones_like(indices[:,0], dtype=tf.float32)
         shape = tf.stack([batch, self.num_card * 3])
         scatter = tf.scatter_nd(indices, updates, shape) - 1.0

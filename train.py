@@ -23,18 +23,7 @@ def translate(episode, gamma=0.9, penalty=-1.0):
         rec[-1] *= gamma ** (n - i) # rec[-1] : reward -> expected return (discounted w/ gamma)
     # Task 2 : remove all record which api call is not 'move'
     rec_valid = [rec for rec in rec_valid if rec[0] == "move"]
-    # Task 3 : generate illegal examples from rec_valid (pick card not in hand)
-    """
-    num_per_state = 1 if rec_invalid else 2
-    rec_illegal = []
-    for _ in range(num_per_state):
-        for api, args, _, _ in rec_valid:
-            _, _, hand = args
-            others = set(CARDS) - set(hand)
-            pick, action = random.choice(list(itertools.product(others, Action)))
-            rec_illegal.append([api, args, [pick, action], penalty]) # illegal move"
-    """
-    # Task 4 : add penalty to rec_invalid & sample n examples from rec_invalid
+    # Task 3 : add penalty to rec_invalid & sample n examples from rec_invalid
     if rec_invalid:
         rec_invalid_ = [[rec[0], rec[1], rec[2], penalty / n] for rec in rec_invalid]
         random.shuffle(rec_invalid_)
@@ -48,10 +37,9 @@ def translate(episode, gamma=0.9, penalty=-1.0):
             else:
                 rec_invalid += rec_invalid_[:n]
                 n = 0
-    # Task 5 : Collect all records (valid : invalid : illegal = 1 : 1 : 1)
-    #recs = rec_valid + rec_invalid + rec_illegal
+    # Task 4 : Collect all records (valid : invalid = 1 : 1)
     recs = rec_valid + rec_invalid
-    # Task 6 : convert state, record, hand to v, h; pick, action to y
+    # Task 5 : convert state, record, hand to v, h; pick, action to y
     adaptor = Adaptor()
     vs = []
     hs = []
@@ -95,7 +83,8 @@ def compute_loss(logits, values, actions, rewards):
     prob = tf.nn.softmax(logits, axis=1) # p(a|s) TensorShape([None, 231])
     prob = tf.gather(prob, actions, batch_dims=1) # p(a|s) TensorShape([None])
     expected_return = tf.reduce_sum(prob * rewards) # E[R|a,s] TensorShape([])
-    return loss, loss_actor, loss_critic, tf.reduce_sum(prob), expected_return
+    return loss, loss_actor, loss_critic, expected_return
+
 
 def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_episode=True):
     # model
@@ -113,16 +102,16 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
     def train_step(vs, hs, ys, rs):
         with tf.GradientTape() as tape:
             logits, values = model(vs, hs)
-            loss, loss_actor, loss_critic, prob, expected_return = compute_loss(logits, values, ys, rs)
+            loss, loss_actor, loss_critic, expected_return = compute_loss(logits, values, ys, rs)
         grads = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
-        return loss, loss_actor, loss_critic, prob, expected_return
+        return loss, loss_actor, loss_critic, expected_return
     # training loop
     for e in range(epoch):
+        # run episodes
         losses = []
         losses_actor = []
         losses_critic = []
-        probs = []
         expected_returns = []
         data_iterator = data_gen(num_play, num_game, model=model) if run_episode else data_gen(num_play, num_game)
         vs = defaultdict(list)
@@ -136,8 +125,9 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
             hs[(v.shape, h.shape)].append(h)
             ys[(v.shape, h.shape)].append(y)
             rs[(v.shape, h.shape)].append(r)
+        # compute loss
         for key in vs:
-            loss, loss_actor, loss_critic, prob, expected_return  = train_step(
+            loss, loss_actor, loss_critic, expected_return  = train_step(
                 tf.concat(vs[key], axis=0), 
                 tf.concat(hs[key], axis=0), 
                 tf.concat(ys[key], axis=0), 
@@ -146,21 +136,17 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
             losses.append(loss.numpy())
             losses_actor.append(loss_actor.numpy())
             losses_critic.append(loss_critic.numpy())
-            probs.append(prob.numpy())
             expected_returns.append(expected_return.numpy())
-            print("prob: %.2E" % probs[-1])
-            print("expected return: %.2E" % expected_returns[-1])            
+
         # save model
         loss_avg = sum(losses)/total
         loss_actor_avg = sum(losses_actor)/total
         loss_critic_avg = sum(losses_critic)/total
-        prob_avg = sum(probs)/total
         expected_return_avg = sum(expected_returns)/total
         print("epoch:", e)
         print("loss: %.2E" % loss_avg)
         print("loss actor: %.2E" % loss_actor_avg)
         print("loss critic: %.2E" % loss_critic_avg)
-        print("prob: %.2E" % prob_avg)
         print("expected return: %.2E" % expected_return_avg)
         model.save(model_path)
         print("model saved")
@@ -174,4 +160,4 @@ if __name__ == "__main__":
     if not model_dir.exists():
         model_dir.mkdir()
     model_path = Path(model_dir, "ac.keras")
-    train(model_path, epoch, num_play, num_game, run_episode=False)
+    train(model_path, epoch, num_play, num_game, run_episode=True)
