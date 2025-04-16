@@ -23,18 +23,7 @@ def translate(episode, gamma=0.9, penalty=-1.0):
         rec[-1] *= gamma ** (n - i) # rec[-1] : reward -> expected return (discounted w/ gamma)
     # Task 2 : remove all record which api call is not 'move'
     rec_valid = [rec for rec in rec_valid if rec[0] == "move"]
-    # Task 3 : generate illegal examples from rec_valid (pick card not in hand)
-    """
-    num_per_state = 1 if rec_invalid else 2
-    rec_illegal = []
-    for _ in range(num_per_state):
-        for api, args, _, _ in rec_valid:
-            _, _, hand = args
-            others = set(CARDS) - set(hand)
-            pick, action = random.choice(list(itertools.product(others, Action)))
-            rec_illegal.append([api, args, [pick, action], penalty]) # illegal move"
-    """
-    # Task 4 : add penalty to rec_invalid & sample n examples from rec_invalid
+    # Task 3 : add penalty to rec_invalid & sample n examples from rec_invalid
     if rec_invalid:
         rec_invalid_ = [[rec[0], rec[1], rec[2], penalty] for rec in rec_invalid]
         random.shuffle(rec_invalid_)
@@ -48,10 +37,9 @@ def translate(episode, gamma=0.9, penalty=-1.0):
             else:
                 rec_invalid += rec_invalid_[:n]
                 n = 0
-    # Task 5 : Collect all records (valid : invalid : illegal = 1 : 1 : 1)
-    #recs = rec_valid + rec_invalid + rec_illegal
+    # Task 4 : Collect all records (valid : invalid = 1 : 1)
     recs = rec_valid + rec_invalid
-    # Task 6 : convert state, record, hand to v, h; pick, action to y
+    # Task 5 : convert state, record, hand to v, h; pick, action to y
     adaptor = Adaptor()
     vs = []
     hs = []
@@ -89,10 +77,11 @@ def compute_loss(logits, values, actions, rewards):
     logsoftmax = tf.nn.log_softmax(logits, axis=1) # log(p(ai|s), ...) TensorShape([None, 231])
     logsoftmax = tf.gather(logsoftmax, actions, batch_dims=1) # log(p(a|s)) TensorShape([None])
     loss_actor = -tf.reduce_mean(logsoftmax * advantages)
-    loss = loss_critic + loss_actor
+    #loss = loss_critic + loss_actor
+    loss = -tf.reduce_mean(logsoftmax * rewards)
     return loss, loss_actor, loss_critic
 
-def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-10.0, run_episode=True):
+def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_episode=True):
     # model
     model = tf.keras.models.load_model(model_path) if model_path.exists() else create_model()
     # optimizer
@@ -137,8 +126,8 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-10.0, run_
 
 if __name__ == "__main__":
     epoch = 1000
-    num_play = 8 # The number of rehearsals for each game
-    num_game = 8 # The number of games for each number of the total players
+    num_play = 1 # The number of rehearsals for each game
+    num_game = 4 # The number of games for each number of the total players
     # model
     model_dir = Path("model")
     if not model_dir.exists():
