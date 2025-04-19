@@ -76,10 +76,14 @@ def compute_loss(logits, values, actions, rewards):
     advantages = rewards - values # (g(a,s) - v(s))  TensorShape([None])
     logsoftmax = tf.nn.log_softmax(logits, axis=1) # log(p(ai|s), ...) TensorShape([None, 231])
     logsoftmax = tf.gather(logsoftmax, actions, batch_dims=1) # log(p(a|s)) TensorShape([None])
+    softmax = tf.nn.softmax(logits, axis=1) # p(a|s) TensorShape([None, 231])
+    probs = tf.gather(softmax, actions, batch_dims=1) # p(a|s) TensorShape([None])
+    prob = tf.reduce_mean(probs)
+    expected_return = tf.reduce_sum(probs * rewards) # g(a,s) TensorShape([None])
     loss_actor = -tf.reduce_mean(logsoftmax * advantages)
     #loss = loss_critic + loss_actor
     loss = -tf.reduce_mean(logsoftmax * rewards)
-    return loss, loss_actor, loss_critic
+    return loss, loss_actor, loss_critic, prob, expected_return
 
 def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_episode=True):
     # model
@@ -97,37 +101,45 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
     def train_step(vs, hs, ys, rs):
         with tf.GradientTape() as tape:
             logits, values = model(vs, hs)
-            loss, loss_actor, loss_critic = compute_loss(logits, values, ys, rs)
+            loss, loss_actor, loss_critic, prob, expected_return = compute_loss(logits, values, ys, rs)
         grads = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
-        return loss, loss_actor, loss_critic
+        return loss, loss_actor, loss_critic, prob, expected_return
     # training loop
     for e in range(epoch):
         losses = []
         losses_actor = []
         losses_critic = []
+        probs = []
+        expected_returns = []
         data_iterator = data_gen(num_play, num_game, model=model) if run_episode else data_gen(num_play, num_game)
-        for episode in tqdm(data_iterator, total=25*num_play*num_game):
+        for episode in tqdm(data_iterator, total=5*num_play*num_game):
             vs, hs, ys, rs = translate(episode, gamma=gamma, penalty=penalty)
-            loss, loss_actor, loss_critic = train_step(vs, hs, ys, rs)
+            loss, loss_actor, loss_critic, prob, expected_return = train_step(vs, hs, ys, rs)
             losses.append(loss.numpy())
             losses_actor.append(loss_actor.numpy())
             losses_critic.append(loss_critic.numpy())
+            probs.append(prob.numpy())
+            expected_returns.append(expected_return.numpy())
         # save model
         loss_avg = sum(losses)/len(losses)
         loss_actor_avg = sum(losses_actor)/len(losses_actor)
         loss_critic_avg = sum(losses_critic)/len(losses_critic)
+        prob_avg = sum(probs)/len(probs)
+        expected_return_avg = sum(expected_returns)/len(expected_returns)
         print("epoch:", e)
         print("loss: %.2E" % loss_avg)
         print("loss actor: %.2E" % loss_actor_avg)
         print("loss critic: %.2E" % loss_critic_avg)
+        print("prob: %.2E" % prob_avg)
+        print("expected return: %.2E" % expected_return_avg)
         model.save(model_path)
         print("model saved")
 
 if __name__ == "__main__":
     epoch = 1000
-    num_play = 1 # The number of rehearsals for each game
-    num_game = 4 # The number of games for each number of the total players
+    num_play = 4 # The number of rehearsals for each game
+    num_game = 5 # The number of games for each number of the total players
     # model
     model_dir = Path("model")
     if not model_dir.exists():
