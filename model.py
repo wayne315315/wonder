@@ -298,7 +298,14 @@ class ActorCritic(tf.keras.Model):
         self.actor = tf.keras.layers.Dense(num_card * 3)
         self.critic = tf.keras.layers.Dense(1)
         # introduce bias to discourage discarding
-        self.bias = tf.constant([[-1e1 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32) 
+        self.bias = tf.constant([[-1e1 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32)
+
+    def build(self, input_shape):
+         states = tf.ones([1,60,7], dtype=tf.int32)
+         hands = tf.ones([1,7], dtype=tf.int32)
+         features = self.common(states, hands)
+         policy = self.actor(features) + self.bias
+         value = self.critic(features) 
 
     def get_config(self):
         config = super().get_config()
