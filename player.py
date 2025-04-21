@@ -8,6 +8,7 @@ class Player(ABC):
 
     def __init__(self):
         self.buffer = None
+        self.record = [] # [[API_CALL, *args, *res, is_valid]]
 
     def show_state(self, state):
         print("")
@@ -72,8 +73,10 @@ class RandomPlayer(Player):
     def __init__(self, verbose=False):
         super().__init__()
         self.verbose = verbose
-    def send_face(self, civ):
-        return random.choice(["Day", "Night"])
+    def send_face(self, state):
+        face = random.choice(["Day", "Night"]) # [[API_CALL, *args, *res, is_valid]]
+        self.record.append(["face", [state], [face], True])
+        return face
 
     def send_move(self, state, record, hand, asked):
         if self.verbose:
@@ -86,7 +89,10 @@ class RandomPlayer(Player):
             random.shuffle(x)
             random.shuffle(y)
             self.buffer = x + y
+        else:
+            self.record[-1][-1] = False # last move is invalid
         pick, action = self.buffer.pop()
+        self.record.append(["move", [state, record, hand], [pick, action], True])
         return pick, action
 
     def send_trade(self, state, record, coins):
@@ -94,23 +100,32 @@ class RandomPlayer(Player):
             self.show_state(state)
             self.show_record(record)
             self.show_coins(coins)
-        return random.choice(coins)
+        trade = random.choice(coins)
+        self.record.append(["trade", [state, record, coins], [trade], True])
+        return trade
 
     def recv_score(self, scores):
-        pass
+        self.record.append(["score", [scores], [], True])
+        
 
 class HumanPlayer(Player):
-    def send_face(self, civ):
-        print("civ: ", civ) 
+    def send_face(self, state):
+        civs = [item["civ"] for item in state]
+        print("All civs:", civs)
+        print("Your civ:", civs[0]) 
         print("Day or Night?")
         while True:
             choice = input("type \"D\" for Day, \"N\" for Night : ").strip()
             if choice == "D":
-                return "Day"
+                face = "Day"
+                break
             elif choice == "N":
-                return "Night"
+                face = "Night"
+                break
             else:
                 print("Invalid input. Please type \"D\" or \"N\" ")
+        self.record.append(["face", [state], [face], True])
+        return face
     
     def send_move(self, state, record, hand, asked):
         self.show_state(state)
@@ -119,6 +134,7 @@ class HumanPlayer(Player):
         if not asked:
             self.buffer = set()
         else:
+            self.record[-1][-1] = False # last move is invalid
             print("")
             print("** Previous move is invalid. Retry...")
         while True:
@@ -133,6 +149,7 @@ class HumanPlayer(Player):
                 break
         a2a = {"B": Action.BUILD, "W": Action.WONDER, "D": Action.DISCARD}
         action = a2a[action]
+        self.record.append(["move", [state, record, hand], [pick, action], True])
         return pick, action
 
     def send_trade(self, state, record, coins):
@@ -142,12 +159,13 @@ class HumanPlayer(Player):
         while True:
             i = input("Choose a trade combination (type the number) : ").strip()
             try:
-                coin = coins[int(i)]
+                trade = coins[int(i)]
             except:
                 print("** ERROR: Invalid input. Please try again")
             else:
                 break
-        return coin
+        self.record.append(["trade", [state, record, coins], [trade], True])
+        return trade
 
     def recv_score(self, scores):
-        pass
+        self.record.append(["score", [scores], [], True])
