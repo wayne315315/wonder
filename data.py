@@ -68,7 +68,9 @@ def epi_gen(arg):
     players = [RandomPlayer() for _ in range(n)]
     if extras:
         model = extras[0]
-        players[0] = AIPlayer(model)
+        #players[0] = AIPlayer(model)
+        for i in range(n):
+            players[i] = random.choice([AIPlayer(model), players[i]])
     episodes = []
     for i, player in enumerate(players):
         game.register(i, player)
