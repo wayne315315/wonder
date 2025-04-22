@@ -115,7 +115,7 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
         for vs_, hs_, ys_, rs_ in dataset:
             # compute metrices
             with tf.GradientTape() as tape:
-                logits, values = model(vs_, hs_)
+                logits, values = model(vs_, hs_, training=True)
                 metrices = compute_loss(logits, values, ys_, rs_)
             loss = metrices[0]
             # compute grads
