@@ -25,7 +25,7 @@ def translate(episode, gamma=0.9, penalty=-1.0):
     rec_valid = [rec for rec in rec_valid if rec[0] == "move"]
     # Task 3 : add penalty to rec_invalid & sample n examples from rec_invalid
     if rec_invalid:
-        rec_invalid_ = [[rec[0], rec[1], rec[2], penalty / n] for rec in rec_invalid]
+        rec_invalid_ = [[rec[0], rec[1], rec[2], penalty] for rec in rec_invalid]
         random.shuffle(rec_invalid_)
         m = len(rec_invalid)
         n = len(rec_valid)
@@ -90,6 +90,9 @@ def compute_loss(logits, values, actions, rewards):
 def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_episode=True):
     # model
     model = tf.keras.models.load_model(model_path) if model_path.exists() else create_model()
+    # dry run model in case model hasn't been built
+    if not model.built:
+        model.build(1)
     # optimizer
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
     # train_step
@@ -99,16 +102,39 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
         tf.TensorSpec(shape=[None], dtype=tf.int32), # ys
         tf.TensorSpec(shape=[None], dtype=tf.float32) # rs
     )
+    grads_acc = [tf.Variable(tf.zeros_like(tv, dtype=tf.float32), trainable=False) for tv in model.trainable_variables]
+    metrices_acc = [tf.Variable(0.0, trainable=False) for _ in range(5)]
     @tf.function(input_signature=input_signature)
-    def train_step(vs, hs, ys, rs):
-        with tf.GradientTape() as tape:
-            logits, values = model(vs, hs)
-            loss, loss_actor, loss_critic, prob, expected_return = compute_loss(logits, values, ys, rs)
-        grads = tape.gradient(loss, model.trainable_variables)
-        optimizer.apply_gradients(zip(grads, model.trainable_variables))
-        return loss, loss_actor, loss_critic, prob, expected_return
+    def train_step(vs, hs, ys, rs, batch_size=896):
+        # reset metrices_acc
+        for metric_acc in metrices_acc:
+            metric_acc.assign(0.0)
+        # split large tensor into batches
+        dataset = tf.data.Dataset.from_tensor_slices((vs, hs, ys, rs)).batch(batch_size)
+        # iterate over batches
+        for vs_, hs_, ys_, rs_ in dataset:
+            # compute metrices
+            with tf.GradientTape() as tape:
+                logits, values = model(vs_, hs_)
+                metrices = compute_loss(logits, values, ys_, rs_)
+            loss = metrices[0]
+            # compute grads
+            grads = tape.gradient(loss, model.trainable_variables)
+            # accumulate grads
+            for i in range(len(model.trainable_variables)):
+                if grads[i] is not None:
+                    grads_acc[i].assign_add(grads[i])
+            # accumulate metrices
+            for metric, metric_acc in zip(metrices, metrices_acc):
+                if metric is not None:
+                    metric_acc.assign_add(metric)
+            tf.print("metrices_acc:", metrices_acc)
+        return tuple(metrices_acc)
     # training loop
     for e in range(epoch):
+        # reset grads_acc
+        for grad_acc in grads_acc:
+            grad_acc.assign(tf.zeros_like(grad_acc))
         # run episodes
         losses = []
         losses_actor = []
@@ -120,28 +146,31 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
         hs = defaultdict(list)
         ys = defaultdict(list)
         rs = defaultdict(list)
-        total = 25 * num_play * num_game
+        # total = 25 * num_play * num_game # data from all players
+        total = 5 * num_play * num_game # data only from player 0
         for episode in tqdm(data_iterator, total=total):
             v, h, y, r = translate(episode, gamma=gamma, penalty=penalty)
-            vs[(v.shape, h.shape)].append(v)
-            hs[(v.shape, h.shape)].append(h)
-            ys[(v.shape, h.shape)].append(y)
-            rs[(v.shape, h.shape)].append(r)
-        # compute loss
+            key = (v.shape[1:], h.shape[1:])
+            vs[key].append(v)
+            hs[key].append(h)
+            ys[key].append(y)
+            rs[key].append(r)
+        # compute gradients & metrices
         for key in vs:
-            loss, loss_actor, loss_critic, prob, expected_return  = train_step(
-                tf.concat(vs[key], axis=0), 
-                tf.concat(hs[key], axis=0), 
-                tf.concat(ys[key], axis=0), 
-                tf.concat(rs[key], axis=0)
-            )
+            v, h, y, r = [tf.concat(x, axis=0) for x in [vs[key], hs[key], ys[key], rs[key]]]
+            tf.print("")
+            tf.print("key:", key)
+            tf.print("v.shape:", v.shape)
+            tf.print("h.shape:", h.shape)
+            tf.print("y.shape:", y.shape)
+            tf.print("r.shape:", r.shape)
+            loss, loss_actor, loss_critic, prob, expected_return  = train_step(v,h,y,r)
             losses.append(loss.numpy())
             losses_actor.append(loss_actor.numpy())
             losses_critic.append(loss_critic.numpy())
             probs.append(prob.numpy())
             expected_returns.append(expected_return.numpy())
-
-        # save model
+        # compute the mean for all matrices in this epoch
         loss_avg = sum(losses)/total
         loss_actor_avg = sum(losses_actor)/total
         loss_critic_avg = sum(losses_critic)/total
@@ -153,6 +182,9 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
         print("loss critic: %.2E" % loss_critic_avg)
         print("prob: %.2E" % prob_avg)
         print("expected return: %.2E" % expected_return_avg)
+        # apply grads for each epoch
+        optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
+        # save model
         model.save(model_path)
         print("model saved")
 

@@ -285,6 +285,10 @@ class Transformer(tf.keras.Model):
 
 @tf.keras.utils.register_keras_serializable()
 class ActorCritic(tf.keras.Model):
+    input_signature = (
+        tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32), # vs
+        tf.TensorSpec(shape=[None, None], dtype=tf.int32) # hs
+    )
     def __init__(self, num_card, d_final=128, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_card = num_card
@@ -301,11 +305,11 @@ class ActorCritic(tf.keras.Model):
         self.bias = tf.constant([[-1e1 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32)
 
     def build(self, input_shape):
-         states = tf.ones([1,60,7], dtype=tf.int32)
-         hands = tf.ones([1,7], dtype=tf.int32)
-         features = self.common(states, hands)
-         policy = self.actor(features) + self.bias
-         value = self.critic(features) 
+        states = tf.ones([1,60,7], dtype=tf.int32)
+        hands = tf.ones([1,7], dtype=tf.int32)
+        features = self.common(states, hands)
+        policy = self.actor(features) + self.bias
+        value = self.critic(features) 
 
     def get_config(self):
         config = super().get_config()
@@ -345,7 +349,7 @@ class ActorCritic(tf.keras.Model):
         value = self.critic(features) # expected return
         return policy, value
     
-    @tf.function
+    @tf.function(input_signature=input_signature)
     def predict_move(self, states, hands):
         policy, _ = self(states, hands)
         # gumbel max trick to sample from policy distribution without replacement
