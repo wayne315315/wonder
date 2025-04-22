@@ -123,7 +123,7 @@ class EncoderLayer(tf.keras.layers.Layer):
             key_dim=d_model,
             dropout=dropout_rate
         )
-        self.ffn = FeedForward(d_model, d_ff)
+        self.ffn = FeedForward(d_model, d_ff, dropout_rate=dropout_rate)
 
     def call(self, x, training=False):
         x = self.self_attention(x, training=training)
@@ -185,7 +185,7 @@ class DecoderLayer(tf.keras.layers.Layer):
             num_heads=num_heads,
             key_dim=d_model,
             dropout=dropout_rate)
-        self.ffn = FeedForward(d_model, d_ff)
+        self.ffn = FeedForward(d_model, d_ff, dropout_rate=dropout_rate)
 
     def call(self, x, context, training=False):
         x = self.self_attention(x=x, training=training)
