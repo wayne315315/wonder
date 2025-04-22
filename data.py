@@ -59,7 +59,8 @@ def extract(history):
             else:
                 rec = [api, args, res]
                 rec_invalid[i].append(rec) # rec: (api, args, res)
-    episodes = [(rec_valid[i], rec_invalid[i]) for i in range(n)]
+    #episodes = [(rec_valid[i], rec_invalid[i]) for i in range(n)] # all players
+    episodes = [(rec_valid[i], rec_invalid[i]) for i in range(1)] # only player 0
     return episodes
 
 def epi_gen(arg):
@@ -69,6 +70,8 @@ def epi_gen(arg):
     if extras:
         model = extras[0]
         players[0] = AIPlayer(model)
+        for i in range(1, n):
+            players[i] = random.choice([AIPlayer(model), players[i]])
     episodes = []
     for i, player in enumerate(players):
         game.register(i, player)

@@ -1,6 +1,6 @@
 from pathlib import Path
 import random
-import itertools
+from collections import defaultdict
 
 from tqdm import tqdm
 import tensorflow as tf
@@ -70,24 +70,29 @@ def compute_loss(logits, values, actions, rewards):
     # loss = loss_actor + loss_critic
     # tf.gather(x, y, batch_dims=1)
     # TensorShape([None, 231]) TensorShape([None, 1]) TensorShape([None]) TensorShape([None])
-    huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM_OVER_BATCH_SIZE)
+    huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
     values = values[:,0] # v(s) TensorShape([None])
     loss_critic = huber_loss(rewards, values) # TensorShape([])
     advantages = rewards - values # (g(a,s) - v(s))  TensorShape([None])
     logsoftmax = tf.nn.log_softmax(logits, axis=1) # log(p(ai|s), ...) TensorShape([None, 231])
     logsoftmax = tf.gather(logsoftmax, actions, batch_dims=1) # log(p(a|s)) TensorShape([None])
-    softmax = tf.nn.softmax(logits, axis=1) # p(a|s) TensorShape([None, 231])
-    probs = tf.gather(softmax, actions, batch_dims=1) # p(a|s) TensorShape([None])
-    prob = tf.reduce_mean(probs)
-    expected_return = tf.reduce_sum(probs * rewards) # g(a,s) TensorShape([None])
-    loss_actor = -tf.reduce_mean(logsoftmax * advantages)
+    loss_actor = -tf.reduce_sum(logsoftmax * advantages)
     #loss = loss_critic + loss_actor
-    loss = -tf.reduce_mean(logsoftmax * rewards)
+    loss = -tf.reduce_sum(logsoftmax * rewards)
+    # metrics
+    probs = tf.nn.softmax(logits, axis=1) # p(a|s) TensorShape([None, 231])
+    probs = tf.gather(probs, actions, batch_dims=1) # p(a|s) TensorShape([None])
+    prob = tf.reduce_sum(probs)
+    expected_return = tf.reduce_sum(probs * rewards) # E[R|a,s] TensorShape([])
     return loss, loss_actor, loss_critic, prob, expected_return
+
 
 def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_episode=True):
     # model
     model = tf.keras.models.load_model(model_path) if model_path.exists() else create_model()
+    # dry run model in case model hasn't been built
+    if not model.built:
+        model.build(1)
     # optimizer
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
     # train_step
@@ -97,52 +102,99 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
         tf.TensorSpec(shape=[None], dtype=tf.int32), # ys
         tf.TensorSpec(shape=[None], dtype=tf.float32) # rs
     )
+    grads_acc = [tf.Variable(tf.zeros_like(tv, dtype=tf.float32), trainable=False) for tv in model.trainable_variables]
+    metrices_acc = [tf.Variable(0.0, trainable=False) for _ in range(5)]
     @tf.function(input_signature=input_signature)
-    def train_step(vs, hs, ys, rs):
-        with tf.GradientTape() as tape:
-            logits, values = model(vs, hs)
-            loss, loss_actor, loss_critic, prob, expected_return = compute_loss(logits, values, ys, rs)
-        grads = tape.gradient(loss, model.trainable_variables)
-        optimizer.apply_gradients(zip(grads, model.trainable_variables))
-        return loss, loss_actor, loss_critic, prob, expected_return
+    def train_step(vs, hs, ys, rs, batch_size=896):
+        # reset metrices_acc
+        for metric_acc in metrices_acc:
+            metric_acc.assign(0.0)
+        # split large tensor into batches
+        dataset = tf.data.Dataset.from_tensor_slices((vs, hs, ys, rs)).batch(batch_size)
+        # iterate over batches
+        for vs_, hs_, ys_, rs_ in dataset:
+            # compute metrices
+            with tf.GradientTape() as tape:
+                logits, values = model(vs_, hs_, training=True)
+                metrices = compute_loss(logits, values, ys_, rs_)
+            loss = metrices[0]
+            # compute grads
+            grads = tape.gradient(loss, model.trainable_variables)
+            # accumulate grads
+            for i in range(len(model.trainable_variables)):
+                if grads[i] is not None:
+                    grads_acc[i].assign_add(grads[i])
+            # accumulate metrices
+            for metric, metric_acc in zip(metrices, metrices_acc):
+                if metric is not None:
+                    metric_acc.assign_add(metric)
+            tf.print("metrices_acc:", metrices_acc)
+        return tuple(metrices_acc)
     # training loop
     for e in range(epoch):
+        # reset grads_acc
+        for grad_acc in grads_acc:
+            grad_acc.assign(tf.zeros_like(grad_acc))
+        # run episodes
         losses = []
         losses_actor = []
         losses_critic = []
         probs = []
         expected_returns = []
         data_iterator = data_gen(num_play, num_game, model=model) if run_episode else data_gen(num_play, num_game)
-        for episode in tqdm(data_iterator, total=5*num_play*num_game):
-            vs, hs, ys, rs = translate(episode, gamma=gamma, penalty=penalty)
-            loss, loss_actor, loss_critic, prob, expected_return = train_step(vs, hs, ys, rs)
+        vs = defaultdict(list)
+        hs = defaultdict(list)
+        ys = defaultdict(list)
+        rs = defaultdict(list)
+        # total = 25 * num_play * num_game # data from all players
+        total = 5 * num_play * num_game # data only from player 0
+        for episode in tqdm(data_iterator, total=total):
+            v, h, y, r = translate(episode, gamma=gamma, penalty=penalty)
+            key = (v.shape[1:], h.shape[1:])
+            vs[key].append(v)
+            hs[key].append(h)
+            ys[key].append(y)
+            rs[key].append(r)
+        # compute gradients & metrices
+        for key in vs:
+            v, h, y, r = [tf.concat(x, axis=0) for x in [vs[key], hs[key], ys[key], rs[key]]]
+            tf.print("")
+            tf.print("key:", key)
+            tf.print("v.shape:", v.shape)
+            tf.print("h.shape:", h.shape)
+            tf.print("y.shape:", y.shape)
+            tf.print("r.shape:", r.shape)
+            loss, loss_actor, loss_critic, prob, expected_return  = train_step(v,h,y,r)
             losses.append(loss.numpy())
             losses_actor.append(loss_actor.numpy())
             losses_critic.append(loss_critic.numpy())
             probs.append(prob.numpy())
             expected_returns.append(expected_return.numpy())
-        # save model
-        loss_avg = sum(losses)/len(losses)
-        loss_actor_avg = sum(losses_actor)/len(losses_actor)
-        loss_critic_avg = sum(losses_critic)/len(losses_critic)
-        prob_avg = sum(probs)/len(probs)
-        expected_return_avg = sum(expected_returns)/len(expected_returns)
+        # compute the mean for all matrices in this epoch
+        loss_avg = sum(losses)/total
+        loss_actor_avg = sum(losses_actor)/total
+        loss_critic_avg = sum(losses_critic)/total
+        prob_avg = sum(probs)/total
+        expected_return_avg = sum(expected_returns)/total
         print("epoch:", e)
         print("loss: %.2E" % loss_avg)
         print("loss actor: %.2E" % loss_actor_avg)
         print("loss critic: %.2E" % loss_critic_avg)
         print("prob: %.2E" % prob_avg)
         print("expected return: %.2E" % expected_return_avg)
+        # apply grads for each epoch
+        optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
+        # save model
         model.save(model_path)
         print("model saved")
 
 if __name__ == "__main__":
     epoch = 1000
-    num_play = 4 # The number of rehearsals for each game
-    num_game = 5 # The number of games for each number of the total players
+    num_play = 2 # The number of rehearsals for each game
+    num_game = 2 # The number of games for each number of the total players
     # model
     model_dir = Path("model")
     if not model_dir.exists():
         model_dir.mkdir()
     model_path = Path(model_dir, "ac.keras")
-    train(model_path, epoch, num_play, num_game)
+    train(model_path, epoch, num_play, num_game, run_episode=True)

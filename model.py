@@ -67,12 +67,13 @@ class BaseAttention(tf.keras.layers.Layer):
 
 @tf.keras.utils.register_keras_serializable()
 class CrossAttention(BaseAttention):
-    def call(self, x, context):
+    def call(self, x, context, training=False):
         attn_output, attn_scores = self.mha(
             query=x,
             key=context,
             value=context,
-            return_attention_scores=True
+            return_attention_scores=True,
+            training=training
         )
         # Cache the attention scores for plotting later.
         self.last_attn_scores = attn_scores
@@ -83,11 +84,12 @@ class CrossAttention(BaseAttention):
 
 @tf.keras.utils.register_keras_serializable()
 class GlobalSelfAttention(BaseAttention): 
-    def call(self, x):
+    def call(self, x, training=False):
         attn_output = self.mha(
             query=x,
             value=x,
-            key=x
+            key=x,
+            training=training
         )
         x = self.add([x, attn_output])
         x = self.layernorm(x)
@@ -106,8 +108,8 @@ class FeedForward(tf.keras.layers.Layer):
         self.add = tf.keras.layers.Add()
         self.layer_norm = tf.keras.layers.LayerNormalization()
 
-    def call(self, x):
-        x = self.add([x, self.seq(x)])
+    def call(self, x, training=False):
+        x = self.add([x, self.seq(x, training=training)])
         x = self.layer_norm(x) 
         return x
 
@@ -123,9 +125,9 @@ class EncoderLayer(tf.keras.layers.Layer):
         )
         self.ffn = FeedForward(d_model, d_ff)
 
-    def call(self, x):
-        x = self.self_attention(x)
-        x = self.ffn(x)
+    def call(self, x, training=False):
+        x = self.self_attention(x, training=training)
+        x = self.ffn(x, training=training)
         return x
 
 
@@ -147,11 +149,11 @@ class Encoder(tf.keras.layers.Layer):
             for _ in range(num_layers)]
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
 
-    def call(self, x):
+    def call(self, x, training=False):
         x = self.embedding(x)
-        x = self.dropout(x)
+        x = self.dropout(x, training=training)
         for i in range(self.num_layers):
-            x = self.enc_layers[i](x)
+            x = self.enc_layers[i](x, training=training)
         return x
     
     def get_config(self):
@@ -185,12 +187,12 @@ class DecoderLayer(tf.keras.layers.Layer):
             dropout=dropout_rate)
         self.ffn = FeedForward(d_model, d_ff)
 
-    def call(self, x, context):
-        x = self.self_attention(x=x)
-        x = self.cross_attention(x=x, context=context)
+    def call(self, x, context, training=False):
+        x = self.self_attention(x=x, training=training)
+        x = self.cross_attention(x=x, context=context, training=training)
         # Cache the last attention scores for plotting later
         self.last_attn_scores = self.cross_attention.last_attn_scores
-        x = self.ffn(x) 
+        x = self.ffn(x, training=training) 
         return x
   
 
@@ -209,11 +211,11 @@ class Decoder(tf.keras.layers.Layer):
                         d_ff=d_ff, dropout_rate=dropout_rate) for _ in range(num_layers)]
         self.last_attn_scores = None
 
-    def call(self, x, context):
+    def call(self, x, context, training=False):
         x = self.embedding(x)  
-        x = self.dropout(x)
+        x = self.dropout(x, training=training)
         for i in range(self.num_layers):
-            x  = self.dec_layers[i](x, context)
+            x  = self.dec_layers[i](x, context, training=training)
         self.last_attn_scores = self.dec_layers[-1].last_attn_scores
         return x
     
@@ -269,9 +271,9 @@ class Transformer(tf.keras.Model):
         })
         return config
     
-    def call(self, state, hand):
-        context = self.encoder(state)  # (batch_size, 18*n+6, d_model)
-        x = self.decoder(hand, context)  # (batch_size, num_hand, d_model)
+    def call(self, state, hand, training=False):
+        context = self.encoder(state, training=training)  # (batch_size, 18*n+6, d_model)
+        x = self.decoder(hand, context, training=training)  # (batch_size, num_hand, d_model)
         # Final linear layer output.
         x = tf.reduce_sum(x, axis=1)  # (batch_size, d_model)
         features = self.final_layer(x) # (batch_size, d_final)
@@ -285,7 +287,11 @@ class Transformer(tf.keras.Model):
 
 @tf.keras.utils.register_keras_serializable()
 class ActorCritic(tf.keras.Model):
-    def __init__(self, num_card, d_final=128, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.1, *args, **kwargs):
+    input_signature = (
+        tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32), # vs
+        tf.TensorSpec(shape=[None, None], dtype=tf.int32) # hs
+    )
+    def __init__(self, num_card, d_final=128, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_card = num_card
         self.d_final = d_final
@@ -305,7 +311,7 @@ class ActorCritic(tf.keras.Model):
         hands = tf.ones([1,7], dtype=tf.int32)
         features = self.common(states, hands)
         policy = self.actor(features) + self.bias
-        value = self.critic(features)
+        value = self.critic(features) 
 
     def get_config(self):
         config = super().get_config()
@@ -337,15 +343,15 @@ class ActorCritic(tf.keras.Model):
         bias = scatter * 1e9
         return bias
 
-    def call(self, states, hands):
-        features = self.common(states, hands)
+    def call(self, states, hands, training=False):
+        features = self.common(states, hands, training=training)
         policy = self.actor(features) + self.bias # include bias into logits to discourage discarding
         mask = self.hands2mask(hands)
         policy += mask # apply hand mask, silent non-hand cards by adding -1e9 to their logits
         value = self.critic(features) # expected return
         return policy, value
     
-    @tf.function
+    @tf.function(input_signature=input_signature)
     def predict_move(self, states, hands):
         policy, _ = self(states, hands)
         # gumbel max trick to sample from policy distribution without replacement
