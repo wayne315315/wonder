@@ -47,10 +47,19 @@ def extract(history):
     n = len(history)
     rec_valid = [[] for _ in range(n)]
     rec_invalid = [[] for _ in range(n)]
+    reward_min = float("inf")
+    reward_max = float("-inf")
     # (api, args, res, is_valid)
     for i in range(n):
         _, [scores, *_], _, _ = history[i].pop() # (api, args, res, is_valid) : (str, list, list, bool)
         reward = get_reward(scores)
+        if i:
+            if reward < reward_min:
+                reward_min = reward
+                i_reward_min = i
+            if reward > reward_max:
+                reward_max = reward
+                i_reward_max = i
         for rec in history[i]:
             api, args, res, is_valid = rec
             if is_valid == True:
@@ -59,8 +68,9 @@ def extract(history):
             else:
                 rec = [api, args, res]
                 rec_invalid[i].append(rec) # rec: (api, args, res)
-    #episodes = [(rec_valid[i], rec_invalid[i]) for i in range(n)] # all players
-    episodes = [(rec_valid[i], rec_invalid[i]) for i in range(1)] # only player 0
+    selected = [0, i_reward_max, i_reward_min]
+    # selected players: include player 0, the best player and the worst player
+    episodes = [(rec_valid[i], rec_invalid[i]) for i in selected]
     return episodes
 
 def epi_gen(arg):
