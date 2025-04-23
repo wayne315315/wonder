@@ -42,27 +42,27 @@ def translate(episode, gamma=0.9, penalty=-1.0):
     recs = rec_valid + rec_invalid
     # Task 5 : convert state, record, hand to v, h; pick, action to y
     adaptor = Adaptor()
-    vs = []
-    hs = []
-    ys = []
-    rs = []
+    vs = defaultdict(list)
+    hs = defaultdict(list)
+    ys = defaultdict(list)
+    rs = defaultdict(list)
     for rec in recs:
-        api, (state, record, hand), (pick, action), reward = rec
+        api, (state, record, hand), (pick, action), r = rec
         v = adaptor.s2v(state, record)[0]
         h = adaptor.h2v(hand)[0]
         y = adaptor.pair2idx[(pick, action)]
-        vs.append(v)
-        hs.append(h)
-        ys.append(y)
-        rs.append(reward)
-    # stack all vectors : vs, hs, ys
-    vs = tf.constant(vs, dtype=tf.int32)
-    hs = tf.ragged.constant(hs, dtype=tf.int32)
-    hs = hs.to_tensor()
-    ys = tf.constant(ys, dtype=tf.int32)
-    rs = tf.constant(rs, dtype=tf.float32)
+        key = (v.shape[0], h.shape[0])
+        vs[key].append(v)
+        hs[key].append(h)
+        ys[key].append(y)
+        rs[key].append(r)
+    # stack all vectors
+    for key in vs:
+        for item in [vs, hs, ys]:
+            item[key] = tf.constant(item[key], dtype=tf.int32)
+        rs[key] = tf.constant(rs[key], dtype=tf.float32)
     return vs, hs, ys, rs
-        
+
 def compute_loss(logits, values, actions, rewards):
     # inputs : v, h, y_true -> outputs : p(a|s), v(s)
     # inputs : rewards -> outputs: g(a,s)
@@ -150,12 +150,12 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
         # total = 25 * num_play * num_game # data from all players
         total = 5 * num_play * num_game # data only from player 0
         for episode in tqdm(data_iterator, total=total):
-            v, h, y, r = translate(episode, gamma=gamma, penalty=penalty)
-            key = (v.shape[1:], h.shape[1:])
-            vs[key].append(v)
-            hs[key].append(h)
-            ys[key].append(y)
-            rs[key].append(r)
+            vs_, hs_, ys_, rs_ = translate(episode, gamma=gamma, penalty=penalty)
+            for key in vs_:
+                vs[key].append(vs_[key])
+                hs[key].append(hs_[key])
+                ys[key].append(ys_[key])
+                rs[key].append(rs_[key])
         # compute gradients & metrices
         for key in vs:
             v, h, y, r = [tf.concat(x, axis=0) for x in [vs[key], hs[key], ys[key], rs[key]]]
