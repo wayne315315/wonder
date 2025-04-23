@@ -64,9 +64,15 @@ class Adaptor:
         return v
     
     def h2v(self, hand):
-        # padding hand number to 7
-        if len(hand) < 7:
+        # padding hand number to 7 if len(hand) <= 7
+        if len(hand) <= 7:
             hand = hand + [None] * (7 - len(hand))
+        # padding hand number to 21 if len(hand) > 7 (i.e. Halikarnassos scavenging turn)
+        elif 7 < len(hand) < 21:
+            hand = hand + [None] * (21 - len(hand))
+        # reduce hand number to 21 if len(hand) > 21 (i.e. Halikarnassos scavenging turn)
+        else:
+            hand = hand[:21]
         h = np.asarray([self.card2idx[card] for card in hand], dtype=np.int32)
         h = np.expand_dims(h, axis=0) # batch
         return h

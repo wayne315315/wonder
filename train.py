@@ -7,6 +7,7 @@ import tensorflow as tf
 
 from helper import Adaptor, CARDS, Action
 from data import data_gen
+from model import ActorCritic
 
 
 def create_model():

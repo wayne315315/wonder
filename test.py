@@ -3,6 +3,7 @@ import tensorflow as tf
 from player import RandomPlayer
 from rl import AIPlayer
 from game import Game
+from model import ActorCritic
 
 
 def test(modelpath, num_play=10, num_game=10):
