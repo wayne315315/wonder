@@ -148,7 +148,8 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
         ys = defaultdict(list)
         rs = defaultdict(list)
         # total = 25 * num_play * num_game # data from all players
-        total = 5 * num_play * num_game # data only from player 0
+        # total = 5 * num_play * num_game # data only from player 0
+        total = 15 * num_play * num_game # data only from player 0, the best & the worst player
         for episode in tqdm(data_iterator, total=total):
             vs_, hs_, ys_, rs_ = translate(episode, gamma=gamma, penalty=penalty)
             for key in vs_:
