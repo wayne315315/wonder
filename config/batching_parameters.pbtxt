@@ -1,0 +1,27 @@
+# Maximum number of requests to combine into a single batch.
+# Governs the throughput/latency tradeoff and resource usage (e.g., GPU memory).
+# Adjust based on model, hardware, and typical request size.
+max_batch_size { value: 4096 }
+
+# Maximum time in MICROSECONDS to wait before processing a batch,
+# even if it hasn't reached max_batch_size.
+# Helps control tail latency. 1000 microseconds = 1 milliseconds.
+batch_timeout_micros { value: 5000 }
+
+# Number of threads dedicated to processing batches in parallel.
+# Increase this if batch processing becomes a bottleneck (e.g., on multi-core CPUs).
+# Often set based on the number of available cores or accelerators.
+num_batch_threads { value: 32 }
+
+# Maximum number of batches worth of requests that can be waiting in the queue.
+# Helps prevent excessive memory usage and queuing delay under high load.
+# If the queue is full, new requests might be rejected (e.g., with RESOURCE_EXHAUSTED).
+max_enqueued_batches { value: 4096 }
+
+# Optional: Specify allowed batch sizes. If set, the scheduler will pad batches
+# up to the next allowed size. This can sometimes improve performance consistency
+# on certain hardware (e.g., GPUs that perform best with specific batch sizes).
+# If commented out or omitted, any size up to max_batch_size is allowed.
+# allowed_batch_sizes { value: 32 }
+# allowed_batch_sizes { value: 64 }
+# allowed_batch_sizes { value: 128 }
