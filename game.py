@@ -94,9 +94,9 @@ class Game:
 
         # logger
         # debug, info, warning, error, critical
-        logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
+        self.logger.propagate = False
 
     def export(self):
         return self.n, self.civs, self.faces, self.deck, self.random_face

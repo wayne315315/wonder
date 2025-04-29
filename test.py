@@ -39,7 +39,7 @@ def test(modelpath, num_play=10, num_game=10):
     print("Export model took %.2f second" % (t2 - t1))
     # launch server
     t1 = time.time()
-    container_id = launch_server()
+    launch_server()
     # probe server until it is ready
     while not probe(serve_name, serve_version=None, verbose=False):
         pass
@@ -76,7 +76,7 @@ def test(modelpath, num_play=10, num_game=10):
             totals[n].append(total)
             ranks[n].append(rank)
     # kill server
-    kill_server(container_id)
+    kill_server()
 
     # clean archive
     clean_archive(serve_name)
@@ -102,6 +102,6 @@ if __name__ == "__main__":
     model_path = Path(model_dir, "ac.keras")
 
     t1 = time.time()
-    test(model_path, num_play=10, num_game=10)
+    test(model_path, num_play=2, num_game=2)
     t2 = time.time()
     print("Elapsed time : %.2f second" % (t2 - t1))

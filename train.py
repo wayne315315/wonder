@@ -5,13 +5,15 @@ from collections import defaultdict
 from tqdm import tqdm
 import tensorflow as tf
 
-from helper import Adaptor, CARDS, Action
+from helper import Adaptor
 from data import data_gen
 from model import ActorCritic
+from serving import launch_server, kill_server
+from serving import export_archive, clean_archive
+from serving import probe
 
 
 def create_model():
-    from model import ActorCritic
     from game import CARDS
     model = ActorCritic(len(CARDS))
     return model
@@ -88,12 +90,19 @@ def compute_loss(logits, values, actions, rewards):
     return loss, loss_actor, loss_critic, prob, expected_return
 
 
-def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_episode=True):
+def train(model_path, serve_name, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_episode=True, batch_size=512):
     # model
     model = tf.keras.models.load_model(model_path) if model_path.exists() else create_model()
     # dry run model in case model hasn't been built
     if not model.built:
         model.build(1)
+    # export base model with serve_name
+    export_archive(serve_name, model, 0)
+    # launch server
+    launch_server()
+    # probe server until it is ready
+    while not probe(serve_name, serve_version=None, verbose=False):
+        pass
     # optimizer
     optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
     # train_step
@@ -106,7 +115,7 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
     grads_acc = [tf.Variable(tf.zeros_like(tv, dtype=tf.float32), trainable=False) for tv in model.trainable_variables]
     metrices_acc = [tf.Variable(0.0, trainable=False) for _ in range(5)]
     @tf.function(input_signature=input_signature)
-    def train_step(vs, hs, ys, rs, batch_size=896):
+    def train_step(vs, hs, ys, rs):
         # reset metrices_acc
         for metric_acc in metrices_acc:
             metric_acc.assign(0.0)
@@ -142,13 +151,14 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
         losses_critic = []
         probs = []
         expected_returns = []
-        data_iterator = data_gen(num_play, num_game, model=model) if run_episode else data_gen(num_play, num_game)
+
+        data_iterator = data_gen(num_play, num_game, serve_name=serve_name) if run_episode else data_gen(num_play, num_game)
+        #data_iterator = data_gen(num_play, num_game, model=model) if run_episode else data_gen(num_play, num_game)
+        
         vs = defaultdict(list)
         hs = defaultdict(list)
         ys = defaultdict(list)
         rs = defaultdict(list)
-        # total = 25 * num_play * num_game # data from all players
-        # total = 5 * num_play * num_game # data only from player 0
         total = 15 * num_play * num_game # data only from player 0, the best & the worst player
         for episode in tqdm(data_iterator, total=total):
             vs_, hs_, ys_, rs_ = translate(episode, gamma=gamma, penalty=penalty)
@@ -189,14 +199,25 @@ def train(model_path, epoch, num_play, num_game, gamma=0.99, penalty=-1.0, run_e
         # save model
         model.save(model_path)
         print("model saved")
+        # export the updated model with version e
+        export_archive(serve_name, model, e)
 
 if __name__ == "__main__":
     epoch = 1000
-    num_play = 2 # The number of rehearsals for each game
-    num_game = 2 # The number of games for each number of the total players
+    num_play = 10 # The number of rehearsals for each game
+    num_game = 10 # The number of games for each number of the total players
     # model
     model_dir = Path("model")
     if not model_dir.exists():
         model_dir.mkdir()
     model_path = Path(model_dir, "ac.keras")
-    train(model_path, epoch, num_play, num_game, run_episode=True)
+    serve_name = "ac"
+    try:
+        train(model_path, serve_name, epoch, num_play, num_game, run_episode=True)
+    except Exception as e:
+        raise e
+    finally:
+        # clean archive
+        clean_archive(serve_name)
+        # kill server
+        kill_server()

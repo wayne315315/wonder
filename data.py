@@ -1,30 +1,14 @@
 import random
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from copy import deepcopy
 
 import numpy as np
 
 from player import RandomPlayer
-from rl import AIPlayer
+from rl import AIPlayer, AIPlayer2
 from game import Game
 
-
-def get_reward_old(scores, exp=2):
-    x = list(zip(scores["total"], scores["coin"])) # eg. [(42, 4), (61,2), (42, 5)]
-    n = len(x)
-    y = [0] * n
-    for i in range(n):
-        for j in range(n):
-            if x[i] > x[j]:
-                y[i] += 1
-            elif x[i] < x[j]:
-                y[i] -= 1
-    y = np.asarray(y)
-    y = np.sign(y) * np.power(np.abs(y), exp)
-    y = y / np.std(y)
-    y += np.log(1 + np.asarray(scores["total"])) # encourage to pursue higher score
-    reward = y[0]
-    return reward
 
 def get_reward(scores):
     totals, coins = scores["total"], scores["coin"]
@@ -42,6 +26,7 @@ def get_reward(scores):
     reward = y[0] + sum([totals[0] - totals[i] for i in range(n)])
     reward /= n
     return reward
+
 
 def extract(history):
     n = len(history)
@@ -73,69 +58,51 @@ def extract(history):
     episodes = [(rec_valid[i], rec_invalid[i]) for i in selected]
     return episodes
 
-def epi_gen(arg):
-    n, num_play, *extras = arg
-    game = Game(n, random_face=False)
-    players = [RandomPlayer() for _ in range(n)]
-    if extras:
-        model = extras[0]
-        players[0] = AIPlayer(model)
-        for i in range(1, n):
-            players[i] = random.choice([AIPlayer(model), players[i]])
-    episodes = []
-    for i, player in enumerate(players):
-        game.register(i, player)
-    for epoch in range(num_play):
-        history = game.run(verbose=50)
-        episodes.extend(extract(history))
-    random.shuffle(episodes)
+
+def epi_gen(game):
+    history = game.run(verbose=50)
+    episodes = extract(history)
     return episodes
 
-def data_gen(num_play, num_game, model=None, shard=5, size=5, max_workers=None):
-    data = [[] for _ in range(shard)]
-    args = [(n, num_play, model) if model else (n, num_play) for n in range(3,8) for _ in range(num_game)]
-    random.shuffle(args)
-    if model:
-        for arg in args:
-            for episode in epi_gen(arg):
-                i = random.randint(0, shard-1)
-                data[i].append(episode)
-                # shard reach size
-                if len(data[i]) >= size:
-                    random.shuffle(data[i])
-                    while data[i]:
-                        yield data[i].pop()
-    else:
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
-            for episodes in executor.map(epi_gen, args):
-                for episode in episodes:
-                    i = random.randint(0, shard-1)
-                    data[i].append(episode)
-                    # shard reach size
-                    if len(data[i]) >= size:
-                        random.shuffle(data[i])
-                        while data[i]:
-                            yield data[i].pop()
-    random.shuffle(data)
-    for datum in data:
-        random.shuffle(datum)
-        while datum:
-            yield datum.pop()
+
+def data_gen(num_play, num_game, model=None, serve_name=None, serve_version=None, shard=5, size=5):
+    # Create all games & plays
+    games = [Game(n, random_face=False) for n in range(3, 8) for _ in range(num_game)]
+    games = [deepcopy(g) for g in games for _ in range(num_play)]
+    for game in games:
+        players = [RandomPlayer() for _ in range(game.n)]
+        if model:
+            players[0] = AIPlayer(model)
+            for i in range(1, game.n):
+                players[i] = random.choice([AIPlayer(model), players[i]])
+        elif serve_name:
+            players[0]  = AIPlayer2(serve_name, serve_version=serve_version) 
+            for i in range(1, game.n):
+                players[i] = random.choice([AIPlayer2(serve_name, serve_version=serve_version), players[i]])
+        for i in range(game.n):
+            game.register(i, players[i])
+    max_workers = min(len(games), 1024)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        f2n = {executor.submit(epi_gen, game): game.n for game in games}
+        for f in as_completed(f2n):
+            episodes = f.result()
+            for episode in episodes:
+                yield episode
 
 # data generation
-# Same game plays for 100 times
-# Same player number plays for 100 times
+# Same game plays for 10 times
+# Same player number plays for 10 times
 # Player number : 3 - 7
-# total data : (3+4+5+6+7) * 100 * 100 = 250000 at least
+# total data : 3 * 5 * 10 * 10 = 1500 at least
 
 if __name__ == "__main__":
     from tqdm import tqdm
     from helper import Adaptor
     adaptor = Adaptor()
-    num_play = 10 # The number of rehearsals for each game
-    num_game = 30 # The number of games for each number of the total players
+    num_play = 2 # The number of rehearsals for each game
+    num_game = 2 # The number of games for each number of the total players
     data = data_gen(num_play, num_game)
-    for episode in tqdm(data, total=num_play * num_game * 25):
+    for episode in tqdm(data, total=num_play * num_game * 15):
         rec_valid, rec_invalid = episode
         print("")
         print(len(rec_valid))

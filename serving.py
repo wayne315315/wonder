@@ -30,12 +30,13 @@ def launch_server(grpc_port=GRPC_PORT, rest_api_port=REST_API_PORT):
     SERVE_BASE_DIR.mkdir(parents=True, exist_ok=True)
     # cmd
     cmd = ["docker run -d --rm -p {grpc_port}:{grpc_port} -p {rest_api_port}:{rest_api_port} --gpus all"]
+    cmd.append("--name tensorflow_serving")
     cmd.append("--mount type=bind,source={source},target={target}")
     cmd.append("--mount type=bind,source={config_dir},target=/etc/config")
     cmd.append("tensorflow/serving:2.17.1-gpu")
     cmd.append("--port=8500")
     cmd.append("--rest_api_port=8501")
-    cmd.append("--grpc_max_threads=2048")
+    cmd.append("--grpc_max_threads=65536")
     cmd.append("--num_load_threads=8")
     cmd.append("--num_unload_threads=8")
     cmd.append("--file_system_poll_wait_seconds=1")
@@ -62,8 +63,8 @@ def launch_server(grpc_port=GRPC_PORT, rest_api_port=REST_API_PORT):
     print("Running tensorflow server in container id:", container_id)
     return container_id
 
-def kill_server(container_id):
-    cmd = "docker stop %s" % container_id
+def kill_server():
+    cmd = "docker stop $(docker ps -qf name=tensorflow_serving)"
     process = subprocess.Popen(
         cmd,
         shell=True,
@@ -72,9 +73,9 @@ def kill_server(container_id):
     )
     process.wait()
     if process.returncode == 0:
-        print("Tensorflow Server %s stopped successfully" % container_id)
+        print("TF Server stopped successfully")
     else:
-        print("Error stopping server %s :" % container_id, process.stderr.read().decode())
+        print("Error stopping TF server")
 
 def probe(serve_name, serve_version=None, verbose=False):
     url = "http://localhost:8501/v1/models/{serve_name}".format(serve_name=serve_name)
