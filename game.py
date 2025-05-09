@@ -260,7 +260,7 @@ class Game:
             if notice_i["type"] == "UPDATE":
                 for j in range(1, self.n): # skip self
                     move = notice_i["moves"][j]
-                    if move["action"] != "BUILD":
+                    if move and move["action"] != "BUILD":
                         move["pick"] = None
             # send notice to player i
             self.players[i].recv_notice(notice_i)
