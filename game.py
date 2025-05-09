@@ -22,6 +22,53 @@
 # wonder
 # - cost : rsc
 # - func : coin, score, rsc, shield, symbol, others
+""" 
+# notice format
+SETTING
+{
+    "type": "SETTING",
+    "faces": None,
+    "civs": ["Olympia", "Babylon", "Gizah"]
+}
+AGE
+{
+    "type": "AGE",
+    "age": 1
+}
+UPDATE
+{
+    "type": "UPDATE",
+    "scavenge": False,
+    "moves": [
+        {"pick": "Pantheon", "action": "WONDER", "trade": [1, 2]},
+        {"pick": "Arena", "action": "DISCARD", "trade": [0, 0]},
+        {"pick": "Palace", "action": "BUILD", "trade": [3, 0]},
+    ],
+    "coins": [1,6,0]
+}
+CLEAR
+{
+    "type": "CLEAR"
+}
+BATTLE
+{
+    "type": "BATTLE",
+    "battle": [[0,3],[-3,0],[0,0]]
+}
+SCORE
+{
+    "type": "SCORE",
+    "civilian": [5, 12, 7],
+    "conflict": [-6, 6, 18],
+    "science": [10, 0, 0],
+    "commerce": [0, 0, 0],
+    "guild": [0, 0, 2],
+    "wonder": [0, 0, 0],
+    "wealth": [1, 2, 3],
+    "total": [10, 20, 30],
+    "coin": [4, 6, 10]
+} 
+"""
 import logging
 import sys
 import random
@@ -200,6 +247,24 @@ class Game:
                 coins.add((left_coin, right_coin))
         coins = sorted(coins, key=lambda x:(sum(x), x[0]))
         return coins if coins else None
+
+    def send_notice(self, notice):
+        for i in range(self.n):
+            # player-centric notice
+            notice_i = deepcopy(notice)
+            for key, val in notice_i.items():
+                if type(val) == list:
+                    for _ in range(i):
+                        val.append(val.pop(0))
+            # if notice type is UPDATE, mask others' pick if their action is DISCARD or WONDER
+            if notice_i["type"] == "UPDATE":
+                for j in range(1, self.n): # skip self
+                    move = notice_i["moves"][j]
+                    if move["action"] != "BUILD":
+                        move["pick"] = None
+            # send notice to player i
+            self.players[i].recv_notice(notice_i)
+            
 
     def recv_face(self, i):
         player = self.players[i]
@@ -392,8 +457,26 @@ class Game:
             ###self.state[i]["rsc_tradable"] = self.rsc_tradable[i]
             ###self.state[i]["symbol"] = self.symbol[i]
             self.state[i]["shield"] = self.shield[i]
+        # send update notice to all players
+        moves = deepcopy(moves)
+        for i, move in enumerate(moves):
+            if move:
+                pick, action, trade = move
+                moves[i] = {"pick": pick, "action": action.name, "trade": list(trade)}
+        notice = {
+            "type": "UPDATE",
+            "scavenge": scavenge,
+            "moves": moves,
+            "coins": self.coin()
+        }
+        self.send_notice(notice)
 
     def clear(self):
+        # send setting notice to all players
+        notice = {
+            "type": "CLEAR"
+        }
+        self.send_notice(notice)
         for hand in self.hands:
             while hand:
                 self.discard.append(hand.pop())
@@ -405,14 +488,26 @@ class Game:
         # Age III: WIN 5, LOSE -1, TIE 0
         WIN = 2 * (self.turn // 6) - 1
         LOSE = -1
+        TIE = 0
+        scores = [[0, 0] for _ in range(self.n)]
         for i in range(self.n):
             l = (i - 1) % self.n
             r = (i + 1) % self.n
-            for x in [l, r]:
+            for j, x in zip([0, 1], [l, r]):
                 if self.shield[i] > self.shield[x]:
-                    self.conflict[i] += WIN
+                    score = WIN
                 elif self.shield[i] < self.shield[x]:
-                    self.conflict[i] += LOSE
+                    score = LOSE
+                else:
+                    score = TIE
+                self.conflict[i] += score
+                scores[i][j] = score
+        # send battle notice to all players
+        notice = {
+            "type": "BATTLE",
+            "battle": scores
+        }
+        self.send_notice(notice)
     
     def calculate(self):
         for i in range(self.n):
@@ -473,14 +568,33 @@ class Game:
             "total": self.total,
             "coin": self.coin()
         }
+        # send score notice to all players
+        notice = {"type": "SCORE"}
+        notice.update(scores)
+        self.send_notice(notice)
         return scores
 
     def init(self):
+        # send setting notice to all players
+        notice = {
+            "type": "SETTING",
+            "civs": self.civs,
+            "faces": self.faces
+        }
+        self.send_notice(notice)
         # determine the face for each civ
         if not self.faces:
             # concurrent face selection
             with ThreadPoolExecutor() as executor:
                 self.faces = list(executor.map(self.recv_face, range(self.n)))
+
+            # send setting notice to all players
+            notice = {
+                "type": "SETTING",
+                "civs": self.civs,
+                "faces": self.faces
+            }
+            self.send_notice(notice)
 
         # initialize the state
         self.state = [
@@ -511,6 +625,12 @@ class Game:
         while self.turn <= 18:
             ### distribute cards in the beginning of each age
             if self.turn % 6 == 1:
+                # send age notice to all players
+                notice = {
+                    "type": "AGE",
+                    "age": self.turn // 6 + 1
+                }
+                self.send_notice(notice)
                 deck = self.deck[self.turn // 6]
                 for j, name in enumerate(deck):
                     self.hands[j % self.n].append(name)

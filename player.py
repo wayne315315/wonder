@@ -83,6 +83,10 @@ class Player(ABC):
     def recv_score(self, scores):
         self.record.append(["score", [scores], [], True])
 
+    def recv_notice(self, notice):
+        pass
+
+
 class RandomPlayer(Player):
     def __init__(self, verbose=False):
         super().__init__()
@@ -172,3 +176,6 @@ class HumanPlayer(Player):
             else:
                 break
         return trade
+    
+    def recv_notice(self, notice):
+        pass
