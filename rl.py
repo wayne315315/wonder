@@ -31,9 +31,6 @@ class AIPlayer(Player):
         trade = coins[0]
         return trade
 
-    def _recv_score(self, scores):
-        pass
-
 
 class AIPlayer2(AIPlayer):
     def __init__(self, serve_name, serve_version=None):

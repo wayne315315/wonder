@@ -65,10 +65,6 @@ class Player(ABC):
     def _send_trade(self, state, record, coins):
         pass
 
-    @abstractmethod
-    def _recv_score(self, scores):
-        pass
-
     def send_face(self, state):
         face = self._send_face(state)
         self.record.append(["face", [state], [face], True])
@@ -85,13 +81,13 @@ class Player(ABC):
         return trade
     
     def recv_score(self, scores):
-        self._recv_score(scores)
         self.record.append(["score", [scores], [], True])
 
 class RandomPlayer(Player):
     def __init__(self, verbose=False):
         super().__init__()
         self.verbose = verbose
+
     def _send_face(self, state):
         face = random.choice(["Day", "Night"]) # [[API_CALL, *args, *res, is_valid]]
         return face
@@ -119,9 +115,6 @@ class RandomPlayer(Player):
             self.show_coins(coins)
         trade = random.choice(coins)
         return trade
-
-    def _recv_score(self, scores):
-        pass
 
 
 class HumanPlayer(Player):
@@ -179,6 +172,3 @@ class HumanPlayer(Player):
             else:
                 break
         return trade
-
-    def _recv_score(self, scores):
-        pass
