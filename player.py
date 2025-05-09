@@ -176,6 +176,3 @@ class HumanPlayer(Player):
             else:
                 break
         return trade
-    
-    def recv_notice(self, notice):
-        pass
