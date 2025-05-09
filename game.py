@@ -23,6 +23,7 @@
 # - cost : rsc
 # - func : coin, score, rsc, shield, symbol, others
 import logging
+import sys
 import random
 import itertools
 from copy import deepcopy
@@ -95,8 +96,9 @@ class Game:
         # logger
         # debug, info, warning, error, critical
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
         self.logger.propagate = False
+        handler = logging.StreamHandler(sys.stdout)
+        self.logger.addHandler(handler)
 
     def export(self):
         return self.n, self.civs, self.faces, self.deck, self.random_face
@@ -613,4 +615,4 @@ if __name__ == "__main__":
     players = [RandomPlayer() for _ in range(n)]
     for i in range(n):
         game.register(i, players[i])
-    game.run()
+    game.run(verbose=logging.DEBUG)
