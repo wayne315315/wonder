@@ -94,6 +94,10 @@ def game():
     uids = data["uids"]
     random_face = data["random_face"]
     players = [p2p[p](uid, app.url, app.events[uid]) for uid, p in zip(uids, players)]
+    # loop other non human players except itself
+    for player in players[1:]:
+        t = Thread(target=player.loop)
+        t.start()
     # create game and register players
     n = len(players)
     game = Game(n, random_face=random_face)

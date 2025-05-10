@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from threading import Thread, Event
+from threading import Event
 
 import requests
 
@@ -45,6 +45,9 @@ class WebPlayer(Player):
 
     def recv_notice(self, notice):
         self.enqueue(notice)
+
+    def loop(self):
+        pass
 
 
 class WebHumanPlayer(WebPlayer):
@@ -101,8 +104,6 @@ class WebRandomPlayer(WebPlayer, RandomPlayer):
     def __init__(self, uid, url, events, verbose=False):
         super().__init__(uid, url, events)
         RandomPlayer.__init__(self, verbose=verbose)
-        t = Thread(target=self.loop)
-        t.start()
 
     def _send_face(self, state):
         return RandomPlayer._send_face(self, state)
