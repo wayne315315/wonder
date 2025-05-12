@@ -2,4 +2,5 @@ tensorflow[and-cuda]==2.17.1
 tensorflow_serving_api==2.17.1
 tqdm==4.67.1
 flask==3.1.0
+flask-socketio==5.5.1
 requests==2.32.3
