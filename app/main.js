@@ -1,9 +1,14 @@
 import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
+import { display } from "./display.js";
+
 
 const URL = "http://127.0.0.1:5000";
 const FACES = ["Day", "Night"];
 const ACTIONS = ["BUILD", "WONDER", "DISCARD"];
 
+let age = 1;
+let civs = null;
+let faces = null;
 
 function getCookie(name) {
     const nameEQ = name + "=";
@@ -14,7 +19,7 @@ function getCookie(name) {
       if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
     }
     return null;
-  }
+}
 
 async function getUID(){
     const uid = await fetch(URL)
@@ -49,26 +54,24 @@ async function fetch_task() {
 }
 
 async function create_game(socket, uid) {
-    const payload = {"uid": uid, "players": ["H", "H", "R"], "random_face": false};
+    const payload = {"uid": uid, "players": ["H", "R", "R"], "random_face": false};
     console.log("sending create");
     socket.emit("create", payload);
     console.log("create sent");
     console.log("waiting for game");
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         const gameListener = (data) => {
             console.log("game created");
             socket.off("game", gameListener);
             socket.off("cancel_create", cancelListener);
             resolve(data.gid);
         };
-    
         const cancelListener = () => {
             console.log("game creation cancelled");
             socket.off("game", gameListener);
             socket.off("cancel_create", cancelListener);
-            reject(undefined);
+            resolve(undefined);
         };
-    
         socket.once("game", gameListener);
         socket.once("cancel_create", cancelListener);
     });
@@ -100,29 +103,62 @@ async function join_game(socket, uid) {
     });
 }
 
+async function waitForDetail(eventName, elements) {
+    return new Promise((resolve) => {
+        // define handler
+        const handler = (event) => {
+            if (event.detail !== undefined) {
+                // remove the listener from all elements
+                elements.forEach(element => {
+                    element.removeEventListener(eventName, handler);
+                });
+                // resolve the promise with the event detail
+                resolve(event.detail);
+            }
+        };
+        // add event listener to each element
+         elements.forEach(element => {
+            element.addEventListener(eventName, handler);
+        });
+    })
+}
 
 async function process_task(socket, uid, task) {
+    // inject age, civs, faces if it doesn't exist in task
     let res;
+    if (!task.age) {
+        task.age = age;
+    }
+    if (!task.civs) {
+        task.civs = civs;
+    }
+    if (!task.faces) {
+        task.faces = faces;
+    }
+    // display task
+    await display(task);
+    // process task
     if (task.type === "GAME") {
         let gid = await create_game(socket, uid);
+        console.log("game id : ", gid);
+    } else if (task.type === "SETTING"){
+        civs = task.civs;
+        faces = task.faces;
+    } else if (task.type === "AGE"){
+        age = task.age;
     } else if (task.type === "FACE"){
-        const face = FACES[Math.floor(Math.random() * FACES.length)];
-        res = {"face": face};
+        let facebuttons = document.querySelectorAll(".facebutton");
+        res = await waitForDetail("face",  facebuttons);
+        console.log("face : ", res);
     } else if (task.type === "MOVE") {
-        const hand = task.hand;
-        const asked = task.asked;
-        const pick = hand[Math.floor(Math.random() * hand.length)];
-        const action = ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
-        res = {"pick": pick, "action": action};
-        if (asked) {
-            console.log("** Previous move is invalid. Retry...");
+        if (task.asked) {
+            const banner = document.getElementById("banner");
+            banner.innerText = "** Previous move is invalid. Retry..."; 
         }
+        res = await waitForDetail("move", document.querySelectorAll("#hand .cardmenu"));
     } else if (task.type === "TRADE") {
-        const coins = task.coins;
-        const trade = coins[0];
-        res = {"trade": trade};
-    } else {
-        console.log(task);
+        let trades = document.querySelectorAll(".trade");
+        res = await waitForDetail("trade",  trades);
     }
     return res;
 }
@@ -146,7 +182,6 @@ function submit(res){
         throw new Error("Connection failed during submit()...");
     });
 }
-
 
 
 export async function main(){

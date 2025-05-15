@@ -5,6 +5,9 @@ from uuid import uuid4
 from collections import defaultdict
 import random
 
+# eventlet monkey patch
+import eventlet
+eventlet.monkey_patch()
 from flask import Flask, send_from_directory, jsonify, request, make_response
 from flask_socketio import SocketIO, emit
 
@@ -23,11 +26,12 @@ app.active = {} # active[uid] = gid
 app.history = defaultdict(dict) # history[gid][uid] 
 app.game = KRQ() # KRQ([{uid:{"players": ["H", "R", "R"], "random_face": False}}])
 app.join = KRQ() # KRQ[{uid:uid}]) for waiting players able to cancel by uid
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*",  logger=True, engineio_logger=True)
 
 web_dir = Path(Path(__file__).parent, "app")
 c = Condition()
 u2s = {}
+
 
 @app.route('/')
 def index():
@@ -133,6 +137,7 @@ def cancel_join(uid):
 def game():
     p2p = {"H": WebHumanPlayer, "R": WebRandomPlayer}
     # use thrading.condition c to avoid excess looping
+    print("Waiting for game setting...")
     while True:
         with c:
             while app.game.is_empty():

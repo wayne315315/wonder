@@ -109,11 +109,19 @@ main {
 }
 
 #banner {
+    display:flex;
     width: 90vw;
     height: 5vw;
     margin: 2vw 0;
     background-color: rgba(255, 255, 255, 0.8);
-    text-align: center;
+    justify-content: center;;
+    align-items: center;
+    font-size: 3vw;
+    font-weight: bold;
+    text-wrap: nowrap;
+    overflow: hidden;
+    color: burlywood;
+    text-overflow: ellipsis;
 }
 
 #hand {
@@ -151,8 +159,23 @@ main {
     transform: translate(-50%, -50%);
 }
 
+.board_group {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    z-index:10;
+}
+
+.board_wrap:hover .board_group--face {
+    transform: rotateY(180deg);
+}
+
 .board {
-    position: relative;
+    position: absolute;
+    /*position: relative;*/
     /* Key properties for flexible size + aspect ratio */
     background-image: url("img/boards_v2.jpg");
     background-size: cover;
@@ -164,6 +187,11 @@ main {
     height: 100%; /* Example */
     overflow: hidden; /* Optional: ensures cropped parts aren't visible if element has padding */
     z-index: 10;
+    backface-visibility: hidden;
+}
+
+.boardback {
+    transform: rotateY(180deg);
 }
 
 /* card */
@@ -213,9 +241,156 @@ main {
 
 .cardwrap:hover {
     cursor: pointer;
-    opacity: 0.9;
+    opacity: 0.8;
 }
 
+/* cardmenu */
+.cardmenu {
+    width: 9vw;
+    aspect-ratio: 4;
+    position: absolute;
+    z-index:30;
+    border-radius: 1vw;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    display:none;
+    gap: 0.5vw;
+    padding: 0.5vw;
+    border-radius: 0.5vw;
+    opacity: 0.9;
+}
+.cardmenu--build{
+    top: 40%;
+}
+.cardmenu--wonder{
+    top: 60%;
+}
+.cardmenu--discard{
+    top: 80%;
+}
+.cardwrap:hover > .cardmenu {
+    cursor: pointer;
+    opacity: 1;
+    display:flex;
+}
+.cardarrow {
+    width: 5vw;
+    aspect-ratio: 1.75;
+    background-image: url("img/icons_v2.png");
+    background-size: 20vw 14.666666vw;
+    background-position: 0% 57%;
+}
+
+.cardmenu:hover > .cardarrow {
+    background-position: 0% 74%;
+}
+.cardmenu:active {
+    outline: 2px solid red;
+}
+.cardoption {
+    width: 5vw;
+    aspect-ratio: 1.75;
+    background-image: url("img/icons_v2.png");
+    background-size: 20vw 14.666666vw;
+}
+.cardoption--build {
+    background-position: 0% 33%;
+    top: 40%;
+}
+.cardmenu:hover > .cardoption--build{
+    background-position: 0% 92%;
+}
+.cardoption--wonder {
+    background-position: 24% 33%;
+    top: 60%;
+}
+.cardmenu:hover > .cardoption--wonder{
+    background-position: 24% 92%;
+}
+.cardoption--discard {
+    background-position: 45% 32%;
+    top: 80%;
+}
+.cardmenu:hover > .cardoption--discard{
+    background-position: 45% 91%;
+}
+
+/* Face button */
+.facebutton {
+    width: 10vw;
+    height: 10vw;
+    background-size: 10vw 10vw;
+}
+
+.facebutton:hover{
+    cursor: pointer;
+    opacity: 0.9;
+    outline: 2px solid white;
+}
+
+.facebutton:active {
+    outline: 2px solid red;
+}
+
+
+.facebutton--Day {
+    background-image: url("img/sun.png");
+}
+
+.facebutton--Night {
+    background-image: url("img/moon.png");
+}
+
+/* Trade option */
+.coin {
+    display: inline-block;
+    width: 2vw;
+    aspect-ratio: 1;
+    background-image: url("img/icons_v2.png");
+    background-position: 0% 0%;
+    background-size: 20vw 14.666666vw;
+}
+
+.trade {
+    width: 12vw;
+    aspect-ratio: 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #c0c0c0;
+    background-image: linear-gradient(
+        135deg,
+        #e8e8e8 0%,   /* Lighter highlight */
+        #d1d1d1 25%,  /* Slightly darker */
+        #b0b0b0 50%,  /* Main silver body */
+        #d1d1d1 75%,  /* Reflecting light again */
+        #e8e8e8 100%  /* Lighter highlight edge */
+    );
+    box-shadow:
+        inset 0px 1px 3px rgba(255, 255, 255, 0.8), /* Inner top highlight */
+        inset 0px -1px 2px rgba(0, 0, 0, 0.3),    /* Inner bottom shadow */
+        5px 5px 15px rgba(0, 0, 0, 0.2); 
+    border: 1px solid #a8a8a8; 
+    color: rgb(142, 124, 3);
+    border-radius: 10vw;
+    font-size: 2vw;
+    font-weight: bold;
+    text-align: center;
+    text-wrap: nowrap;
+    overflow: hidden;
+}
+
+.trade:hover {
+    cursor: pointer;
+    opacity: 0.9;
+    outline: 2px solid white;
+}
+
+.trade:active {
+    outline: 2px solid red;
+}
 
 /* Built card */
 .boarditem {
@@ -328,7 +503,7 @@ main {
     aspect-ratio: 0.64130434782;
     background-image: url("img/cardback_v2.png");
     background-size: 27vw 14.0338983051vw;
-    background-position: 100% 0%;
+    background-position: 0% 0%;
     z-index: 15;
     position: absolute;
     top: 50%;
@@ -337,6 +512,16 @@ main {
     transition: top 1s ease-in-out, left 1s ease-in-out, z-index 0.01s;
     transition-delay: 0s, 0s, 0.99s;
     border-radius: 1vw;
+}
+/* Age */
+.cardback--age_1 {
+    background-position: 0% 0%;
+}
+.cardback--age_2 {
+    background-position: 50% 0%;
+}
+.cardback--age_3 {
+    background-position: 100% 0%;
 }
 /* Normal stage 1 */
 .cardback--dock_1 {
