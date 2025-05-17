@@ -10,7 +10,7 @@ export const CIVS = [
 
 export const FACES = ["Day", "Night"];
 
-export function createBoard(i, n, civ, face) {
+export function createBoard(i, n, civ, face, username) {
     const bg_unit_y = 100 / 13;
     const bg_pos_y = (7 * (face === "Night") + CIVS.indexOf(civ)) * bg_unit_y;
     const LEFT = 23;
@@ -74,6 +74,19 @@ export function createBoard(i, n, civ, face) {
     // create player wrap
     const playerWrap = document.createElement("div");
     playerWrap.classList.add("whiteblock");
+    // create bank
+    const bank = document.createElement("div");
+    bank.classList.add("bank");
+    bank.innerHTML = `<span class="coin"></span>&nbsp;&nbsp;3`;
+    // create user
+    const user = document.createElement("div");
+    user.classList.add("user");
+    user.classList.add("user--whiteblock");
+    user.innerText = `${username}`;
+    // user append to player wrap
+    playerWrap.appendChild(user);
+    // bank append to player wrap
+    playerWrap.appendChild(bank);
     // board append to board group
     boardGroup.appendChild(board);
     // board group append to board wrap
@@ -93,9 +106,4 @@ export function createBoard(i, n, civ, face) {
     // set main min-height
     const main = document.querySelector("main");
     main.style.minHeight = `${100}vh`;
-}
-
-
-export function chooseSide() {
-    const boardID = "player_board_0";
 }

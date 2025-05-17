@@ -1,5 +1,5 @@
 import { createBoard, CIVS, FACES } from "./board.js";
-import { displayHand, displayTrade, removeCardFromHand } from "./hand.js";
+import { displayHand, displayTrade, displayScore, removeCardFromHand } from "./hand.js";
 import { createCard, createCardback, CARDS } from "./card.js";
 
 
@@ -7,6 +7,7 @@ import { createCard, createCardback, CARDS } from "./card.js";
 export async function display(task) {
     const banner = document.getElementById("banner");
     const hand = document.getElementById("hand");
+    const info = document.getElementById("info");
     switch (task.type){
         case "SETTING":
             const arena = document.getElementById("arena");
@@ -18,20 +19,43 @@ export async function display(task) {
             // create board
             const civs = task.civs;
             const faces = task.faces;
+            const users = task.users;
+            
             const n = civs.length;
             for (let i = 0; i < n; i++){
                 let civ = civs[i];
                 let face =  (faces) ? faces[i] : null;
                 if (face) {
-                    createBoard(i, n, civ, face);
+                    createBoard(i, n, civ, face, users[i]);
                 } else {                
-                    createBoard(i, n, civ, "Night");
+                    createBoard(i, n, civ, "Night", users[i]);
                     let boardback = document.getElementById(`player_board_group_${i}`).firstChild;
                     boardback.classList.add("boardback");
-                    createBoard(i, n, civ, "Day");
+                    createBoard(i, n, civ, "Day", users[i]);
                     // board group
                     let boardGroup = document.getElementById(`player_board_group_${i}`);
                     boardGroup.classList.add("board_group--face");
+                }
+            }
+            // create player scoreboard TODO task.users
+            if (!document.querySelector(".scoreboard")) {
+                for (let i=0; i<n; i++){
+                    // create scoreboard
+                    let scoreboard = document.createElement("div");
+                    scoreboard.id = `scoreboard_${i}`;
+                    scoreboard.classList.add("scoreboard");
+                    // create username
+                    let username = document.createElement("div");
+                    username.classList.add("user");
+                    username.innerText = `${users[i]}`
+                    // create battle zone
+                    let battle = document.createElement("div");
+                    battle.classList.add("battle");
+                    // append username and battle zone to scoreboard
+                    scoreboard.appendChild(username);
+                    scoreboard.appendChild(battle);
+                    // append scoreboard to info
+                    info.appendChild(scoreboard);
                 }
             }
             break;
@@ -48,7 +72,6 @@ export async function display(task) {
                 });
                 hand.appendChild(facebutton);
             };
-            console.log("facebutton created");
             break;
         case "AGE":
             let age = task.age;
@@ -73,11 +96,25 @@ export async function display(task) {
             }
             break;
         case "BATTLE":
-            // TODO
             banner.innerText = "BATTLE";
+            for (let i = 0; i < task.battle.length; i++) {
+                const battlezone = document.querySelector(`#scoreboard_${i}`).querySelector(".battle");
+                for (let result of task.battle[i]) {
+                    if (result > 0){
+                        let point = document.createElement("div");
+                        point.classList.add(`win-${task.age}`);
+                        battlezone.appendChild(point);
+                    } else if (result < 0){
+                        let point = document.createElement("div");
+                        point.classList.add("lose");
+                        battlezone.appendChild(point);
+                    }
+                }
+            }
             break;
         case "SCORE":
-            // TODO
+            banner.innerText = "SCORE";
+            displayScore(task);
             break;
     }
 }
@@ -145,14 +182,13 @@ async function displayMove(i, move, age, civs, faces) {
             cardwrap.classList.remove("boarditem--proto");
             cardwrap.classList.add("boarditem--type_" + boarditemtype); 
             zone.appendChild(cardwrap);
-        }, 500);
+        }, 100);
     } else if (move.action == "WONDER"){
         // create and center cardback in the middle of the board
         const cardback = createCardback(age);
         boardWrap.appendChild(cardback);
         // calculate wonder dock position
         let stage = boardWrap.querySelectorAll(".cardback").length;
-        console.log("Wonder stage:", stage);
         // Handle special cases for Babylon and Gizah with Night side
         if (faces[i] === "Night" && civs[i] === "Babylon") {
             stage += 3;
@@ -167,4 +203,18 @@ async function displayMove(i, move, age, civs, faces) {
 }
 
 async function displayCoin(i, coin) {
+    // i-th player bank
+    const bank = document.querySelector(`#player_board_${i} .bank`);
+    let coin_prev = parseInt(bank.innerHTML.match(/(\d+)$/)[0]);
+    while (coin > coin_prev) {
+        coin_prev++;
+        // delay 10ms by setTimout with promise
+        await new Promise(resolve => setTimeout(resolve, 10));
+        bank.innerHTML = bank.innerHTML.replace(/\d+$/, coin_prev);
+    }
+    while (coin < coin_prev) {
+        coin_prev--;
+        await new Promise(resolve => setTimeout(resolve, 10));
+        bank.innerHTML = bank.innerHTML.replace(/\d+$/, coin_prev);
+    } 
 }

@@ -62,3 +62,34 @@ export function displayTrade(coins) {
     /*const hand = document.getElementById("hand");
     hand.replaceChildren(...trades);*/
 }
+
+export function displayScore(task) {
+    const keys = ["conflict", "wealth", "wonder", "civilian", "science", "commerce", "guild", "total", "coin"];
+    // create HTML score table
+    const scoretable = document.createElement("table");
+    // insert header row "users"
+    const headerRow = scoretable.insertRow();
+    headerRow.classList.add("header-row");
+    const headerCell = document.createElement("th");
+    headerRow.appendChild(headerCell);
+    task.users.forEach(user => {
+        const cell = document.createElement("th");
+        cell.textContent = user;
+        headerRow.appendChild(cell);
+    });
+    // insert rows
+    scoretable.classList.add("scoretable");
+    for (const key of keys) {
+        const row = scoretable.insertRow();
+        const schemaCell = document.createElement("th");
+        schemaCell.textContent = key.toUpperCase();
+        row.appendChild(schemaCell);
+        const values = task[key];
+        values.forEach(value => {
+            const cell = row.insertCell();
+            cell.textContent = value;
+        });
+    }
+    const hand = document.getElementById("hand");
+    hand.appendChild(scoretable);
+}

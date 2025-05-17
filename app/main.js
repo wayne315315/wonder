@@ -9,6 +9,8 @@ const ACTIONS = ["BUILD", "WONDER", "DISCARD"];
 let age = 1;
 let civs = null;
 let faces = null;
+let gid = null;
+let users = null;
 
 function getCookie(name) {
     const nameEQ = name + "=";
@@ -54,7 +56,7 @@ async function fetch_task() {
 }
 
 async function create_game(socket, uid) {
-    const payload = {"uid": uid, "players": ["H", "R", "R"], "random_face": false};
+    const payload = {"uid": uid, "players": ["H", "R", "R", "R", "R", "R", "R"], "random_face": false};
     console.log("sending create");
     socket.emit("create", payload);
     console.log("create sent");
@@ -64,7 +66,7 @@ async function create_game(socket, uid) {
             console.log("game created");
             socket.off("game", gameListener);
             socket.off("cancel_create", cancelListener);
-            resolve(data.gid);
+            resolve(data);
         };
         const cancelListener = () => {
             console.log("game creation cancelled");
@@ -124,7 +126,8 @@ async function waitForDetail(eventName, elements) {
 }
 
 async function process_task(socket, uid, task) {
-    // inject age, civs, faces if it doesn't exist in task
+    console.log("task : ", task);
+    // inject users, gid, age, civs, faces if it doesn't exist in task
     let res;
     if (!task.age) {
         task.age = age;
@@ -135,15 +138,22 @@ async function process_task(socket, uid, task) {
     if (!task.faces) {
         task.faces = faces;
     }
+    if (!task.gid) {
+        task.gid = gid;
+    }
+    if (!task.users) {
+        task.users = users;
+    }
     // display task
     await display(task);
     // process task
     if (task.type === "GAME") {
-        let gid = await create_game(socket, uid);
-        console.log("game id : ", gid);
+        await create_game(socket, uid);
     } else if (task.type === "SETTING"){
         civs = task.civs;
         faces = task.faces;
+        gid = task.gid;
+        users = task.users;
     } else if (task.type === "AGE"){
         age = task.age;
     } else if (task.type === "FACE"){
@@ -153,7 +163,11 @@ async function process_task(socket, uid, task) {
     } else if (task.type === "MOVE") {
         if (task.asked) {
             const banner = document.getElementById("banner");
-            banner.innerText = "** Previous move is invalid. Retry..."; 
+            banner.innerText = "** Previous move is invalid. Retry...";
+            const color_prev = banner.style.color;
+            banner.style.color = "red";
+            await new Promise(resolve => setTimeout(resolve, 1));
+            banner.style.color = color_prev; 
         }
         res = await waitForDetail("move", document.querySelectorAll("#hand .cardmenu"));
     } else if (task.type === "TRADE") {
@@ -183,13 +197,31 @@ function submit(res){
     });
 }
 
-
 export async function main(){
     const uid = await getUID();
     const socket = io(URL);
+    // old display tasks
+    let endpoint = `${URL}/done`;
+    const tasks_done = await fetch(endpoint).then((response) => {
+        return response.json()
+    })
+    console.log("tasks_done:",  tasks_done)
+    for (let task of tasks_done) {
+        await process_task(socket, uid, task);
+    }
+    // active task right before reloading
+    endpoint = `${URL}/current`;
+    const tasks_current = await fetch(endpoint).then((response) => {
+        return response.json()
+    })
+    console.log("tasks_current:",  tasks_current)
+    for (let task of tasks_current) {
+        let res = await process_task(socket, uid, task);
+        submit(res);
+    }
+    // new tasks
     while (true){
         let task = await fetch_task();
-        console.log("task : ", task);
         let res = await process_task(socket, uid, task);
         if (res){
             submit(res);
