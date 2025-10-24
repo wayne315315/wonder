@@ -1,16 +1,19 @@
 from abc import ABC, abstractmethod
 from threading import Event
+from pathlib import Path
 
 import requests
+import tensorflow as tf
 
 from player import Player, RandomPlayer
-from rl import AIPlayer, AIPlayer2
+from rl import AIPlayer
 from const import Action
+from model import ActorCritic
 
 
 class WebPlayer(Player):
     def __init__(self, uid, url, events):
-        super().__init__()
+        Player.__init__(self)
         self.uid = uid
         self.url = url
         self.events = events # List[Event] only 1 event or 0
@@ -113,6 +116,22 @@ class WebRandomPlayer(WebPlayer, RandomPlayer):
 
     def _send_trade(self, state, record, coins): 
         return RandomPlayer._send_trade(self, state, record, coins)
+    
+    def loop(self):
+        while True:
+            endpoint = f"{self.url}/dequeue"
+            resp = requests.get(endpoint, cookies={"uid": self.uid})
+            task = resp.json()
+            if task["type"] == "SCORE":
+                print("Thread finished")
+                break
+
+class WebAIPlayer(AIPlayer, WebPlayer):
+    def __init__(self, uid, url, events):
+        model_path = Path("model", "base.keras")
+        model = tf.keras.models.load_model(model_path)
+        AIPlayer.__init__(self, model)
+        WebPlayer.__init__(self, uid, url, events)
     
     def loop(self):
         while True:

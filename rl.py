@@ -7,7 +7,7 @@ from serving import send_grpc_request
 
 class AIPlayer(Player):
     def __init__(self, model):
-        super().__init__()
+        Player.__init__(self)
         self.helper = Adaptor()
         self.model = model
 

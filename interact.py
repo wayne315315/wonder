@@ -12,7 +12,7 @@ from flask import Flask, send_from_directory, jsonify, request, make_response
 from flask_socketio import SocketIO, emit
 
 from game import Game, CIVS, CARDS
-from web import WebHumanPlayer, WebRandomPlayer
+from web import WebHumanPlayer, WebRandomPlayer, WebAIPlayer
 from utils import KeyedRemovableQueue as KRQ
 
 
@@ -161,7 +161,7 @@ def cancel_join(uid):
 
 @socketio.event
 def game():
-    p2p = {"H": WebHumanPlayer, "R": WebRandomPlayer}
+    p2p = {"H": WebHumanPlayer, "R": WebRandomPlayer, "A": WebAIPlayer}
     # use threading.condition c to avoid excess polling
     print("Waiting for game setting...")
     while True:
@@ -202,7 +202,7 @@ def game():
                 for uid in uids:
                     app.active[uid] = gid
                 # TODO : dummy usernames (uid -> user)
-                names = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace", "Heidi"]
+                names = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace"]
                 app.u2u[gid] = u2u = {uid: names[i] for i, uid in enumerate(uids)} #####
                 # emit event to all human players
                 for uid in uids_h:
