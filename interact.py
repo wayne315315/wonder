@@ -203,7 +203,7 @@ def game():
                     app.active[uid] = gid
                 # TODO : dummy usernames (uid -> user)
                 names = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace"]
-                app.u2u[gid] = u2u = {uid: names[i] for i, uid in enumerate(uids)} #####
+                app.u2u[gid] = u2u = {uid: f'{names[i]} ({payload["players"][i]})' for i, uid in enumerate(uids)} #####
                 # emit event to all human players
                 for uid in uids_h:
                     sid = u2s[uid]

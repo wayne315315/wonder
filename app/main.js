@@ -56,7 +56,7 @@ async function fetch_task() {
 }
 
 async function create_game(socket, uid) {
-    const payload = {"uid": uid, "players": ["A", "R", "R", "R", "R", "R", "R"], "random_face": false};
+    const payload = {"uid": uid, "players": ["H", "A", "R", "A", "R", "A", "R"], "random_face": false};
     console.log("sending create");
     socket.emit("create", payload);
     console.log("create sent");
