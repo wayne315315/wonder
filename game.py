@@ -383,11 +383,11 @@ class Game:
                 if wonder["func"]["symbol"]:
                     self.symbol[i] += Counter({wonder["func"]["symbol"]:1})
                 if wonder["func"]["others"]:
-                    if wonder["func"]["others"] == "free_first":
+                    if wonder["func"]["others"] == "free first":
                         self.free_first = i
-                    if wonder["func"]["others"] == "free_last":
+                    if wonder["func"]["others"] == "free last":
                         self.free_last = i
-                    if wonder["func"]["others"] == "free_color":
+                    if wonder["func"]["others"] == "free color":
                         self.free_color = i        
                     if wonder["func"]["others"] == "seven":
                         self.seven = i
