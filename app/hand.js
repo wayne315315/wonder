@@ -64,7 +64,7 @@ export function displayTrade(coins) {
 }
 
 export function displayScore(task) {
-    const keys = ["conflict", "wealth", "wonder", "civilian", "science", "commerce", "guild", "total", "coin"];
+    const keys = ["conflict", "wealth", "wonder", "civilian", "science", "commerce", "guild", "total"];
     // create HTML score table
     const scoretable = document.createElement("table");
     // insert header row "users"
@@ -82,6 +82,7 @@ export function displayScore(task) {
     for (const key of keys) {
         const row = scoretable.insertRow();
         const schemaCell = document.createElement("th");
+        /*
         schemaCell.textContent = key.toUpperCase();
         row.appendChild(schemaCell);
         const values = task[key];
@@ -89,6 +90,29 @@ export function displayScore(task) {
             const cell = row.insertCell();
             cell.textContent = value;
         });
+        */
+        if (key === "total") {
+            schemaCell.textContent = "TOTAL (COIN)";
+            row.appendChild(schemaCell);
+
+            const totalScores = task["total"];
+            const coinScores = task["coin"];
+
+            // Loop by index to combine the total and coin values
+            for (let i = 0; i < task.users.length; i++) {
+                const cell = row.insertCell();
+                cell.textContent = `${totalScores[i]} (${coinScores[i]})`;
+            }
+        } else {
+            schemaCell.textContent = key.toUpperCase();
+            row.appendChild(schemaCell);
+            
+            const values = task[key];
+            values.forEach(value => {
+                const cell = row.insertCell();
+                cell.textContent = value;
+            });
+        }
     }
     const hand = document.getElementById("hand");
     hand.appendChild(scoretable);
