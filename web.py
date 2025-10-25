@@ -127,10 +127,12 @@ class WebRandomPlayer(WebPlayer, RandomPlayer):
                 break
 
 class WebAIPlayer(AIPlayer, WebPlayer):
+    model = None
     def __init__(self, uid, url, events):
-        model_path = Path("model", "base.keras")
-        model = tf.keras.models.load_model(model_path)
-        AIPlayer.__init__(self, model)
+        if not WebAIPlayer.model:
+            model_path = Path("model", "base.keras")
+            WebAIPlayer.model = tf.keras.models.load_model(model_path)
+        AIPlayer.__init__(self, WebAIPlayer.model)
         WebPlayer.__init__(self, uid, url, events)
     
     def loop(self):
