@@ -301,8 +301,14 @@ class ActorCritic(tf.keras.Model):
         self.num_layers = num_layers
         self.dropout_rate = dropout_rate
         self.common = Transformer(num_layers=num_layers, d_model=d_model, num_heads=num_heads, d_ff=d_ff, num_card=num_card, d_final=d_final, dropout_rate=dropout_rate)
-        self.actor = tf.keras.layers.Dense(num_card * 3)
-        self.critic = tf.keras.layers.Dense(1)
+        self.actor = tf.keras.Sequential([
+            FeedForward(d_final, d_ff, dropout_rate=dropout_rate),
+            tf.keras.layers.Dense(num_card * 3)
+        ])
+        self.critic = tf.keras.Sequential([
+            FeedForward(d_final, d_ff, dropout_rate=dropout_rate),
+            tf.keras.layers.Dense(1)
+        ])
         # introduce bias to discourage discarding
         self.bias = tf.constant([[-1e1 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32)
 

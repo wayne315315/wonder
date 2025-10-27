@@ -76,12 +76,15 @@ def compute_loss(logits, values, actions, rewards):
     huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
     values = values[:,0] # v(s) TensorShape([None])
     loss_critic = huber_loss(rewards, values) # TensorShape([])
-    advantages = rewards - values # (g(a,s) - v(s))  TensorShape([None])
+    advantages = rewards - tf.stop_gradient(values) # (g(a,s) - v(s))  TensorShape([None])
+    # normalize advantages
+    advantages = (advantages - tf.reduce_mean(advantages)) / (tf.math.reduce_std(advantages) + 1e-8)
+
     logsoftmax = tf.nn.log_softmax(logits, axis=1) # log(p(ai|s), ...) TensorShape([None, 231])
     logsoftmax = tf.gather(logsoftmax, actions, batch_dims=1) # log(p(a|s)) TensorShape([None])
     loss_actor = -tf.reduce_sum(logsoftmax * advantages)
-    #loss = loss_critic + loss_actor
-    loss = -tf.reduce_sum(logsoftmax * rewards)
+    loss = loss_critic + loss_actor
+    #loss = -tf.reduce_sum(logsoftmax * rewards)
     # metrics
     probs = tf.nn.softmax(logits, axis=1) # p(a|s) TensorShape([None, 231])
     probs = tf.gather(probs, actions, batch_dims=1) # p(a|s) TensorShape([None])
@@ -100,6 +103,9 @@ def train(model_path, serve_name, epoch, num_play, num_game, gamma=0.99, penalty
     export_archive(serve_name, model, 0)
     # launch server
     launch_server()
+    import time
+    time.sleep(5)
+
     # probe server until it is ready
     while not probe(serve_name, serve_version=None, verbose=False):
         pass
@@ -204,8 +210,8 @@ def train(model_path, serve_name, epoch, num_play, num_game, gamma=0.99, penalty
 
 if __name__ == "__main__":
     epoch = 1000
-    num_play = 10 # The number of rehearsals for each game
-    num_game = 10 # The number of games for each number of the total players
+    num_play = 2 # The number of rehearsals for each game
+    num_game = 2 # The number of games for each number of the total players
     # model
     model_dir = Path("model")
     if not model_dir.exists():
