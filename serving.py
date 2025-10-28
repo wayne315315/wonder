@@ -9,8 +9,10 @@ import contextlib
 import grpc
 import requests
 import tensorflow as tf
+from google.protobuf import text_format
 from tensorflow_serving.apis import predict_pb2
 from tensorflow_serving.apis import prediction_service_pb2_grpc
+from tensorflow_serving.config import model_server_config_pb2
 
 
 # Server config
@@ -24,10 +26,29 @@ HOST = "localhost"
 NAME_STATE = "state" 
 NAME_HAND = "hand"
 
+
+def generate_config():
+    model_names = [p.name for p in SERVE_BASE_DIR.glob("*")]
+    server_config = model_server_config_pb2.ModelServerConfig()
+    config_list = server_config.model_config_list
+    for model_name in model_names:
+        model_config = config_list.config.add()
+        model_config.name = model_name
+        model_config.base_path = f"{TARGET_DIR}/{model_name}"
+        model_config.model_platform = "tensorflow"
+        model_config.model_version_policy.all.SetInParent()
+    pbtxt_string = text_format.MessageToString(server_config)
+    with open(Path(CONFIG_DIR, "models_config.pbtxt"), "wt") as f:
+        f.write(pbtxt_string)
+
 # launch tensorflow serving
 def launch_server(grpc_port=GRPC_PORT, rest_api_port=REST_API_PORT):
     # Ensure SERVE_BASE_DIR exists
     SERVE_BASE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # generate config file
+    generate_config()
+
     # cmd
     cmd = ["docker run -d --rm -p {grpc_port}:{grpc_port} -p {rest_api_port}:{rest_api_port} --gpus all"]
     cmd.append("--name tensorflow_serving")
@@ -240,6 +261,5 @@ if __name__ == "__main__":
             else:
                 break
     # clean up
-    kill_server(container_id)
+    kill_server()
     clean_archive(serve_name)
-    
