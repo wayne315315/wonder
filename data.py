@@ -65,7 +65,7 @@ def epi_gen(game):
     return episodes
 
 
-def data_gen(num_play, num_game, model=None, serve_name=None, serve_version=None, shard=5, size=5):
+def data_gen(num_play, num_game, model=None, serve_name=None, serve_version=None, exploited=None):
     # Create all games & plays
     games = [Game(n, random_face=False) for n in range(3, 8) for _ in range(num_game)]
     games = [deepcopy(g) for g in games for _ in range(num_play)]
@@ -73,12 +73,13 @@ def data_gen(num_play, num_game, model=None, serve_name=None, serve_version=None
         players = [RandomPlayer() for _ in range(game.n)]
         if model:
             players[0] = AIPlayer(model)
+            # the exploiter will be trained against all exploited models
             for i in range(1, game.n):
-                players[i] = random.choice([AIPlayer(model), players[i]])
+                players[i] = AIPlayer(exploited) if exploited else random.choice([AIPlayer(model), players[i]])
         elif serve_name:
             players[0]  = AIPlayer2(serve_name, serve_version=serve_version) 
             for i in range(1, game.n):
-                players[i] = random.choice([AIPlayer2(serve_name, serve_version=serve_version), players[i]])
+                players[i] = AIPlayer(exploited) if exploited else random.choice([AIPlayer2(serve_name, serve_version=serve_version), players[i]])
         for i in range(game.n):
             game.register(i, players[i])
     max_workers = min(len(games), 1024)

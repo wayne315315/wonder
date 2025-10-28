@@ -12,7 +12,7 @@ from flask import Flask, send_from_directory, jsonify, request, make_response
 from flask_socketio import SocketIO, emit
 
 from game import Game, CIVS, CARDS
-from web import WebHumanPlayer, WebRandomPlayer, WebAIPlayer
+from web import WebHumanPlayer, WebRandomPlayer, WebAIPlayer, WebAIExploiter
 from utils import KeyedRemovableQueue as KRQ
 
 
@@ -161,7 +161,7 @@ def cancel_join(uid):
 
 @socketio.event
 def game():
-    p2p = {"H": WebHumanPlayer, "R": WebRandomPlayer, "A": WebAIPlayer}
+    p2p = {"H": WebHumanPlayer, "R": WebRandomPlayer, "A": WebAIPlayer, "E": WebAIExploiter}
     # use threading.condition c to avoid excess polling
     print("Waiting for game setting...")
     while True:

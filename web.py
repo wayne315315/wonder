@@ -10,6 +10,9 @@ from rl import AIPlayer
 from const import Action
 from model import ActorCritic
 
+# spare GPU for training
+tf.config.set_visible_devices([], 'GPU')
+
 
 class WebPlayer(Player):
     def __init__(self, uid, url, events):
@@ -135,6 +138,24 @@ class WebAIPlayer(AIPlayer, WebPlayer):
         AIPlayer.__init__(self, WebAIPlayer.model)
         WebPlayer.__init__(self, uid, url, events)
     
+    def loop(self):
+        while True:
+            endpoint = f"{self.url}/dequeue"
+            resp = requests.get(endpoint, cookies={"uid": self.uid})
+            task = resp.json()
+            if task["type"] == "SCORE":
+                print("Thread finished")
+                break
+
+class WebAIExploiter(AIPlayer, WebPlayer):
+    model = None
+    def __init__(self, uid, url, events):
+        if not WebAIExploiter.model:
+            model_path = Path("model", "exploiter.keras")
+            WebAIExploiter.model = tf.keras.models.load_model(model_path)
+        AIPlayer.__init__(self, WebAIExploiter.model)
+        WebPlayer.__init__(self, uid, url, events)
+
     def loop(self):
         while True:
             endpoint = f"{self.url}/dequeue"
