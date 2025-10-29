@@ -67,7 +67,8 @@ class BaseAttention(tf.keras.layers.Layer):
 
 @tf.keras.utils.register_keras_serializable()
 class CrossAttention(BaseAttention):
-    def call(self, x, context, training=False):
+    def call(self, inputs, training=False):
+        x, context = inputs
         attn_output, attn_scores = self.mha(
             query=x,
             key=context,
@@ -187,9 +188,10 @@ class DecoderLayer(tf.keras.layers.Layer):
             dropout=dropout_rate)
         self.ffn = FeedForward(d_model, d_ff, dropout_rate=dropout_rate)
 
-    def call(self, x, context, training=False):
-        x = self.self_attention(x=x, training=training)
-        x = self.cross_attention(x=x, context=context, training=training)
+    def call(self, inputs, training=False):
+        x, context = inputs
+        x = self.self_attention(x, training=training)
+        x = self.cross_attention([x, context], training=training)
         # Cache the last attention scores for plotting later
         self.last_attn_scores = self.cross_attention.last_attn_scores
         x = self.ffn(x, training=training) 
@@ -211,11 +213,12 @@ class Decoder(tf.keras.layers.Layer):
                         d_ff=d_ff, dropout_rate=dropout_rate) for _ in range(num_layers)]
         self.last_attn_scores = None
 
-    def call(self, x, context, training=False):
+    def call(self, inputs, training=False):
+        x, context = inputs
         x = self.embedding(x)  
         x = self.dropout(x, training=training)
         for i in range(self.num_layers):
-            x  = self.dec_layers[i](x, context, training=training)
+            x  = self.dec_layers[i]([x, context], training=training)
         self.last_attn_scores = self.dec_layers[-1].last_attn_scores
         return x
     
@@ -271,10 +274,11 @@ class Transformer(tf.keras.Model):
         })
         return config
     
-    def call(self, state, hand, training=False):
+    def call(self, inputs, training=False):
+        state, hand = inputs
         context = self.encoder(state, training=training)  # (batch_size, 18*n+6, d_model)
-        x = self.decoder(hand, context, training=training)  # (batch_size, num_hand, d_model)
-        # Final linear layer output.
+        x = self.decoder([hand, context], training=training)  # (batch_size, num_hand, d_model)
+        # Final linear layer output
         x = tf.reduce_sum(x, axis=1)  # (batch_size, d_model)
         features = self.final_layer(x) # (batch_size, d_final)
         try:
@@ -311,11 +315,14 @@ class ActorCritic(tf.keras.Model):
         ])
         # introduce bias to discourage discarding
         self.bias = tf.constant([[-1e1 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32)
+        
+        # compile model without using JIT to avoid error; optimizer to 'SGD' to avoid saving inner variables
+        self.compile(optimizer="SGD", jit_compile=False)
 
     def build(self, input_shape):
         states = tf.ones([1,63,7], dtype=tf.int32)
         hands = tf.ones([1,7], dtype=tf.int32)
-        features = self.common(states, hands)
+        features = self.common([states, hands])
         policy = self.actor(features) + self.bias
         value = self.critic(features) 
 
@@ -349,8 +356,9 @@ class ActorCritic(tf.keras.Model):
         bias = scatter * 1e9
         return bias
 
-    def call(self, states, hands, training=False):
-        features = self.common(states, hands, training=training)
+    def call(self, inputs, training=False):
+        states, hands = inputs
+        features = self.common(inputs, training=training)
         policy = self.actor(features) + self.bias # include bias into logits to discourage discarding
         mask = self.hands2mask(hands)
         policy += mask # apply hand mask, silent non-hand cards by adding -1e9 to their logits
@@ -359,7 +367,7 @@ class ActorCritic(tf.keras.Model):
     
     @tf.function(input_signature=input_signature)
     def predict_move(self, states, hands):
-        policy, _ = self(states, hands)
+        policy, _ = self([states, hands])
         # gumbel max trick to sample from policy distribution without replacement
         # http://amid.fish/humble-gumbel
         noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(policy))))
