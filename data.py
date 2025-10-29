@@ -53,8 +53,10 @@ def extract(history):
             else:
                 rec = [api, args, res]
                 rec_invalid[i].append(rec) # rec: (api, args, res)
-    selected = [0, i_reward_max, i_reward_min]
+    
+    #selected = [0, i_reward_max, i_reward_min]
     # selected players: include player 0, the best player and the worst player
+    selected = [0] # only select the player 0
     episodes = [(rec_valid[i], rec_invalid[i]) for i in selected]
     return episodes
 
@@ -75,11 +77,11 @@ def data_gen(num_play, num_game, model=None, serve_name=None, serve_version=None
             players[0] = AIPlayer(model)
             # the exploiter will be trained against all exploited models
             for i in range(1, game.n):
-                players[i] = AIPlayer(exploited) if exploited else random.choice([AIPlayer(model), players[i]])
+                players[i] = AIPlayer2(exploited) if exploited else random.choice([AIPlayer(model), players[i]])
         elif serve_name:
             players[0]  = AIPlayer2(serve_name, serve_version=serve_version) 
             for i in range(1, game.n):
-                players[i] = AIPlayer(exploited) if exploited else random.choice([AIPlayer2(serve_name, serve_version=serve_version), players[i]])
+                players[i] = AIPlayer2(exploited) if exploited else random.choice([AIPlayer2(serve_name, serve_version=serve_version), players[i]])
         for i in range(game.n):
             game.register(i, players[i])
     max_workers = min(len(games), 1024)
@@ -103,7 +105,7 @@ if __name__ == "__main__":
     num_play = 2 # The number of rehearsals for each game
     num_game = 2 # The number of games for each number of the total players
     data = data_gen(num_play, num_game)
-    for episode in tqdm(data, total=num_play * num_game * 15):
+    for episode in tqdm(data, total=num_play * num_game * 5):
         rec_valid, rec_invalid = episode
         print("")
         print(len(rec_valid))

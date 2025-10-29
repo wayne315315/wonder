@@ -23,7 +23,7 @@ def translate(episode, gamma=0.9, penalty=-1.0):
     # Task 1 : translate rewards to expected return with discounted factor gamma
     n = len(rec_valid)
     for i, rec in enumerate(rec_valid):
-        rec[-1] *= gamma ** (n - i) # rec[-1] : reward -> expected return (discounted w/ gamma)
+        rec[-1] *= gamma ** (n - 1 - i) # rec[-1] : reward -> expected return (discounted w/ gamma)
     # Task 2 : remove all record which api call is not 'move'
     rec_valid = [rec for rec in rec_valid if rec[0] == "move"]
     # Task 3 : add penalty to rec_invalid & sample n examples from rec_invalid
@@ -165,7 +165,7 @@ def train(model_path, serve_name, epoch, num_play, num_game, gamma=0.99, penalty
         hs = defaultdict(list)
         ys = defaultdict(list)
         rs = defaultdict(list)
-        total = 15 * num_play * num_game # data only from player 0, the best & the worst player
+        total = 5 * num_play * num_game # data only from player 0
         for episode in tqdm(data_iterator, total=total):
             vs_, hs_, ys_, rs_ = translate(episode, gamma=gamma, penalty=penalty)
             for key in vs_:
@@ -200,11 +200,11 @@ def train(model_path, serve_name, epoch, num_play, num_game, gamma=0.99, penalty
         print("loss critic: %.2E" % loss_critic_avg)
         print("prob: %.2E" % prob_avg)
         print("expected return: %.2E" % expected_return_avg)
-        # apply grads for each epoch
-        optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
         # save model
         model.save(model_path)
         print("model saved")
+        # apply grads for each epoch
+        optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
         # export the updated model with version e
         export_archive(serve_name, model, e)
 

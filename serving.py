@@ -246,8 +246,9 @@ if __name__ == "__main__":
         export_archive(serve_name, model, epoch, last_num_version=last_num_version)
         wait = 5
         while True:
-            serve_version = max(0, epoch - last_num_version + 1) # access the previous version
-            serve_version = None
+            #serve_version = max(0, epoch - last_num_version + 1) # access the previous version
+            serve_version = epoch
+            print(f"serve version: {serve_version}")
             while not probe(serve_name, serve_version=serve_version):
                 print("probe %s version %s :" % (serve_name, serve_version), False)
                 time.sleep(wait)
@@ -259,6 +260,7 @@ if __name__ == "__main__":
                 time.sleep(wait)
                 wait *= 2
             else:
+                print("moves:", moves.shape)
                 break
     # clean up
     kill_server()

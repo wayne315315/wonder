@@ -151,7 +151,7 @@ class WebAIExploiter(AIPlayer, WebPlayer):
     model = None
     def __init__(self, uid, url, events):
         if not WebAIExploiter.model:
-            model_path = Path("model", "exploiter.keras")
+            model_path = Path("model", "exploiter_best.keras")
             WebAIExploiter.model = tf.keras.models.load_model(model_path)
         AIPlayer.__init__(self, WebAIExploiter.model)
         WebPlayer.__init__(self, uid, url, events)
