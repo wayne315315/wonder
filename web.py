@@ -129,13 +129,20 @@ class WebRandomPlayer(WebPlayer, RandomPlayer):
                 print("Thread finished")
                 break
 
+
+
 class WebAIPlayer(AIPlayer, WebPlayer):
-    model = None
+    fn = None
+    input_signature = (
+        tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32), # vs
+        tf.TensorSpec(shape=[None, None], dtype=tf.int32) # hs
+    )
     def __init__(self, uid, url, events):
-        if not WebAIPlayer.model:
+        if not WebAIPlayer.fn:
             model_path = Path("model", "base.keras")
-            WebAIPlayer.model = tf.keras.models.load_model(model_path)
-        AIPlayer.__init__(self, WebAIPlayer.model)
+            model = tf.keras.models.load_model(model_path)
+            WebAIPlayer.fn = model.predict_move.get_concrete_function(*WebAIPlayer.input_signature)
+        AIPlayer.__init__(self, WebAIPlayer.fn)
         WebPlayer.__init__(self, uid, url, events)
     
     def loop(self):
@@ -148,12 +155,17 @@ class WebAIPlayer(AIPlayer, WebPlayer):
                 break
 
 class WebAIExploiter(AIPlayer, WebPlayer):
-    model = None
+    fn = None
+    input_signature = (
+        tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32), # vs
+        tf.TensorSpec(shape=[None, None], dtype=tf.int32) # hs
+    )
     def __init__(self, uid, url, events):
-        if not WebAIExploiter.model:
+        if not WebAIExploiter.fn:
             model_path = Path("model", "exploiter_best.keras")
-            WebAIExploiter.model = tf.keras.models.load_model(model_path)
-        AIPlayer.__init__(self, WebAIExploiter.model)
+            model = tf.keras.models.load_model(model_path)
+            WebAIExploiter.fn = model.predict_move.get_concrete_function(*WebAIExploiter.input_signature)
+        AIPlayer.__init__(self, WebAIExploiter.fn)
         WebPlayer.__init__(self, uid, url, events)
 
     def loop(self):
