@@ -7,7 +7,7 @@ if __name__ == "__main__":
     from data import write_data
 
     # Faster with CPU rather than GPU
-    tf.config.set_visible_devices([], 'GPU')
+    #tf.config.set_visible_devices([], 'GPU')
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_game', type=int, default=100, help='number of games per player count')

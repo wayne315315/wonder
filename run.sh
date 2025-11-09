@@ -5,6 +5,28 @@
 
 NUM_ITERATIONS=100
 
+
+# Use getopts to parse command-line arguments
+# "n:" means we are looking for an option -n that requires an argument
+while getopts "n:" opt; do
+  case $opt in
+    n)
+      # If -n is found, set NUM_ITERATIONS to its value ($OPTARG)
+      NUM_ITERATIONS=$OPTARG
+      ;;
+    \?)
+      # Handle an invalid option (e.g., -x)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      # Handle -n with no value provided (e.g., ./run.sh -n)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
 echo "Starting training loop for $NUM_ITERATIONS iterations..."
 
 for (( i=1; i<=$NUM_ITERATIONS; i++ ))

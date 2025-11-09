@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Name for the on-demand job
+  name: wonder-on-demand-run
+spec:
+  # This 'template' block was inside 'jobTemplate.spec'
+  template:
+    spec:
+      containers:
+      - name: wonder
+        image: us-central1-docker.pkg.dev/wonder-477103/wonder/wonder:v1
+        command: ["/bin/sh", "-c", "./run.sh"]
+        resources:
+          requests:
+            cpu: "12"
+            memory: "32Gi"
+          limits:
+            cpu: "15"
+            memory: "60Gi"
+      
+      # 1. This demands the Arm node
+      nodeSelector:
+        kubernetes.io/arch: arm64
+        
+      # 2. This is the "key" that unlocks the node
+      #    Matching your NoExecute taint
+      tolerations:
+      - key: "app"
+        operator: "Equal"
+        value: "wonder"
+        effect: "NoExecute"
+        
+      restartPolicy: Never
+      
+  # Optional: Cleans up the pod 60 seconds after it finishes
+  ttlSecondsAfterFinished: 60
+  
