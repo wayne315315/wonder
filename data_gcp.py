@@ -7,14 +7,15 @@ if __name__ == "__main__":
     from data import write_data
 
     # Faster with CPU rather than GPU
-    #tf.config.set_visible_devices([], 'GPU')
+    tf.config.set_visible_devices([], 'GPU')
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_game', type=int, default=100, help='number of games per player count')
     args = parser.parse_args()
 
     # path
-    p_data = "gs://wayne315315/wonder/data/exploiter.tfrecord"
+    #p_data = "gs://wayne315315/wonder/data/exploiter.tfrecord"
+    p_data = "exploiter.tfrecord"
     p_model = "gs://wayne315315/wonder/model/exploiter.keras" # model to be trained
     p_other = "gs://wayne315315/wonder/model/base.keras" # models to be played against
 

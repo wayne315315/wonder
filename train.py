@@ -150,7 +150,7 @@ if __name__ == "__main__":
     p_data = "data/exploiter.tfrecord"
     p_model = "model/exploiter.keras"
     # Faster with CPU rather than GPU
-    tf.config.set_visible_devices([], 'GPU')
+    #tf.config.set_visible_devices([], 'GPU')
     # Start training
     t1 = time.time()
     train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=2048)

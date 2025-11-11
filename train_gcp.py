@@ -4,7 +4,8 @@ if __name__ == "__main__":
     from train import train
     
     # path
-    p_data = "gs://wayne315315/wonder/data/exploiter.tfrecord"
+    #p_data = "gs://wayne315315/wonder/data/exploiter.tfrecord"
+    p_data = "exploiter.tfrecord"
     p_model = "gs://wayne315315/wonder/model/exploiter.keras"
 
     # Faster with CPU rather than GPU

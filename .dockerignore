@@ -3,7 +3,9 @@
 .venv
 .dockerignore
 Dockerfile
+Dockerfile-gpu
 __pycache__/
+*.yaml
 *.log
 app/
 config/

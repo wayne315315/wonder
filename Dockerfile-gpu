@@ -1,0 +1,15 @@
+FROM tensorflow/tensorflow:2.17.0-gpu
+
+
+# Set the working directory in the container
+WORKDIR /wonder
+
+# Copy your local code into the container
+COPY . .
+
+# Install
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir tqdm==4.67.1
+
+# Run
+CMD ["./run.sh"]

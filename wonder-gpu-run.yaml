@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Name for the on-demand job
+  name: wonder-gpu-run
+spec:
+  # This 'template' block was inside 'jobTemplate.spec'
+  template:
+    spec:
+      containers:
+      - name: wonder
+        image: us-central1-docker.pkg.dev/wonder-477103/wonder/wonder:gpu
+        command: ["/bin/sh", "-c", "./run.sh"]
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        
+      # 1. This is the "key" that unlocks the node
+      #    Matching your NoExecute taint
+      tolerations:
+      - key: "gpu-job"
+        operator: "Equal"
+        value: "wonder"
+        effect: "NoExecute"
+        
+      restartPolicy: Never
+      
+  # Optional: Cleans up the pod 60 seconds after it finishes
+  ttlSecondsAfterFinished: 60
