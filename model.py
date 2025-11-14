@@ -315,9 +315,6 @@ class ActorCritic(tf.keras.Model):
         ])
         # introduce bias to discourage discarding
         self.bias = tf.constant([[-1e1 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32)
-        
-        # compile model without using JIT to avoid error; optimizer to 'SGD' to avoid saving inner variables
-        self.compile(optimizer="SGD", jit_compile=False)
 
     def build(self, input_shape):
         states = tf.ones([1,63,7], dtype=tf.int32)

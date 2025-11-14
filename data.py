@@ -103,7 +103,7 @@ def epi_gen(game, gamma=0.9, penalty=-1.0):
     return vs, hs, ys, rs
 
 
-def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0):
+def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, max_workers=4):
     """ Generate data for training/evaluation
     Args:
         num_game: The number of games for each number of the total players
@@ -129,21 +129,20 @@ def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9
             game.register(i, players[i])
 
     # Start generating episodes
-    max_workers = 4
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         f2n = {executor.submit(lambda g:epi_gen(g, gamma=gamma, penalty=penalty), game): game.n for game in games}
         for f in as_completed(f2n):
             vs, hs, ys, rs = f.result()
             yield (vs, hs, ys, rs)
 
-def write_data(p_data, p_model, num_game, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, batch_size=512):
+def write_data(p_data, p_model, num_game, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, batch_size=512, max_workers=4):
     # load model and its concrete function
     model = tf.keras.models.load_model(p_model)
     fn_model = model.predict_move.get_concrete_function(
         tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32),
         tf.TensorSpec(shape=[None, None], dtype=tf.int32)
     )
-    data_iterator = data_gen(num_game, fn_model=fn_model, fn_others=fn_others, w_others=w_others, gamma=gamma, penalty=penalty)
+    data_iterator = data_gen(num_game, fn_model=fn_model, fn_others=fn_others, w_others=w_others, gamma=gamma, penalty=penalty, max_workers=max_workers)
     vs = defaultdict(list)
     hs = defaultdict(list)
     ys = defaultdict(list)

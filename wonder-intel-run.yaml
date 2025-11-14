@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Name for the on-demand job
+  name: wonder-intel-run
+spec:
+  # This 'template' block was inside 'jobTemplate.spec'
+  template:
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-nodepool: intel-pool
+      containers:
+      - name: wonder
+        image: us-central1-docker.pkg.dev/wonder-477103/wonder/wonder:v2
+        command: ["/bin/sh", "-c", "./run.sh"]
+        resources:
+          requests:
+            cpu: "16"
+            memory: "60Gi"
+          limits:
+            cpu: "32"
+            memory: "120Gi"
+
+      # 2. This is the "key" that unlocks the node
+      #    Matching your NoExecute taint
+      tolerations:
+      - key: "intel"
+        operator: "Equal"
+        value: "wonder"
+        effect: "NoExecute"
+        
+      restartPolicy: Never
+      
+  # Optional: Cleans up the pod 60 seconds after it finishes
+  ttlSecondsAfterFinished: 60
+  

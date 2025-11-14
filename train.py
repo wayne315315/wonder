@@ -93,7 +93,7 @@ def train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=512):
     for i, item in enumerate(raw):
         d = tf.data.Dataset.from_tensor_slices(item).batch(batch_size, num_parallel_calls=tf.data.AUTOTUNE)
         dataset = dataset.concatenate(d) if i > 0 else d
-    dataset = dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+    dataset = dataset.cache("cache").prefetch(buffer_size=tf.data.AUTOTUNE)
 
     # run ppo
     for e in tqdm(range(epoch)):
@@ -153,6 +153,6 @@ if __name__ == "__main__":
     #tf.config.set_visible_devices([], 'GPU')
     # Start training
     t1 = time.time()
-    train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=2048)
+    train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=4096)
     t2 = time.time()
     print(f"Time taken: {t2 - t1} seconds")
