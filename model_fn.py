@@ -1,3 +1,5 @@
+from const import CARDS
+
 import tensorflow as tf
 from tensorflow.keras import mixed_precision
 
@@ -63,7 +65,8 @@ class HandsToMask(tf.keras.layers.Layer):
         hands = hands - 1
         hands = hands * 3
         hands = tf.keras.ops.concatenate([hands + i for i in range(3)], axis=1)
-        indices = tf.map_fn(fn=lambda i: tf.map_fn(fn=lambda card: tf.stack([i, card]), elems=hands[i]), elems=tf.range(batch))
+        indices = self.h2i(hands)
+        #indices = tf.map_fn(fn=lambda i: tf.map_fn(fn=lambda card: tf.stack([i, card]), elems=hands[i]), elems=tf.range(batch))
         indices = tf.reshape(indices, [-1,2])
         indices = tf.boolean_mask(indices, indices[:, 1] >= 0)
         indices, _ = tf.raw_ops.UniqueV2(x=indices, axis=tf.constant([0]))
@@ -77,6 +80,21 @@ class HandsToMask(tf.keras.layers.Layer):
         config = super().get_config()
         config.update({"num_card": self.num_card})
         return config
+    
+    @staticmethod
+    def h2i(hands):
+        # Get the dynamic shape of the hands tensor
+        shape = tf.shape(hands)
+        batch_size = shape[0]
+        num_cards = shape[1]
+        batch_indices, _ = tf.meshgrid(
+            tf.range(batch_size),
+            tf.range(num_cards),
+            indexing='ij'
+        )
+        batch_indices = tf.cast(batch_indices, dtype=hands.dtype)
+        indices = tf.stack([batch_indices, hands], axis=2)
+        return indices
 
 
 @tf.keras.utils.register_keras_serializable()
@@ -94,7 +112,6 @@ class PredictMove(tf.keras.layers.Layer):
 
     def get_config(self):
         return super().get_config()
-
 
 
 def get_ff(x, d_model, d_ff, dropout_rate=0.1):
@@ -184,7 +201,7 @@ def get_transformer(state, hand, num_card, num_layers, d_model, num_heads, d_ff,
 
 
 # functional API model to recreate ActorCritic structure without using any subclassing
-def create_ac(num_card, d_final=128, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.1):
+def create_ac(num_card=len(CARDS), d_final=128, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.1):
     # create input layers
     states = tf.keras.Input(shape=(None, 7), dtype=tf.int32)
     hands = tf.keras.Input(shape=(None,), dtype=tf.int32)
@@ -207,17 +224,13 @@ def create_ac(num_card, d_final=128, d_model=256, d_ff=128, num_heads=2, num_lay
 
 
 if __name__ == "__main__":
-    from const import CARDS
-
-    num_card = len(CARDS)
-    model = create_ac(num_card, dropout_rate=0.1)
+    model = create_ac()
     model.summary()
-
     state = tf.ones([4,63,7], dtype=tf.int32)
-    hand = tf.ones([4,21], dtype=tf.int32)
+    hand = tf.constant([[1,1,3,4,0,0,0] for _ in range(4)], dtype=tf.int32)
     inputs = [state, hand]
-    outputs = model(inputs, training=False)
-    outputs_ = model(inputs, training=False)
-    for output, output_ in zip(outputs, outputs_):
-        print(output[0][:3], output_[0][:3])
-
+    o1s = model(inputs, training=False)
+    o2s = model(inputs, training=False)
+    o3s = model(inputs, training=True)
+    for o1, o2, o3 in zip(o1s, o2s, o3s):
+        print(o1[0, :3], o2[0, :3], o3[0, :3])
