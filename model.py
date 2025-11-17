@@ -291,10 +291,6 @@ class Transformer(tf.keras.Model):
 
 @tf.keras.utils.register_keras_serializable()
 class ActorCritic(tf.keras.Model):
-    input_signature = (
-        tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32), # vs
-        tf.TensorSpec(shape=[None, None], dtype=tf.int32) # hs
-    )
     def __init__(self, num_card, d_final=128, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_card = num_card
@@ -320,7 +316,7 @@ class ActorCritic(tf.keras.Model):
         states = tf.ones([1,63,7], dtype=tf.int32)
         hands = tf.ones([1,7], dtype=tf.int32)
         features = self.common([states, hands])
-        policy = self.actor(features) + self.bias
+        policy = self.actor(features) + tf.cast(self.bias, features.dtype)
         value = self.critic(features) 
 
     def get_config(self):
@@ -342,7 +338,7 @@ class ActorCritic(tf.keras.Model):
         hands -= 1
         hands *= 3
         hands = tf.concat([hands + i for i in range(3)], axis=1)
-        indices = tf.map_fn(fn=lambda i: tf.map_fn(fn=lambda card: tf.stack([i, card]), elems=hands[i]), elems=tf.range(batch))
+        indices = self.h2i(hands)
         indices = tf.reshape(indices, [-1,2])
         # filter out invalid indices
         indices = tf.boolean_mask(indices, indices[:, 1] >= 0)
@@ -350,24 +346,38 @@ class ActorCritic(tf.keras.Model):
         updates = tf.ones_like(indices[:,0], dtype=tf.float32)
         shape = tf.stack([batch, self.num_card * 3])
         scatter = tf.scatter_nd(indices, updates, shape) - 1.0
-        bias = scatter * 1e9
+        bias = scatter * 1e2
         return bias
+
+    @staticmethod
+    def h2i(hands):
+        # Get the dynamic shape of the hands tensor
+        shape = tf.shape(hands)
+        batch_size = shape[0]
+        num_cards = shape[1]
+        batch_indices, _ = tf.meshgrid(
+            tf.range(batch_size),
+            tf.range(num_cards),
+            indexing='ij'
+        )
+        batch_indices = tf.cast(batch_indices, dtype=hands.dtype)
+        indices = tf.stack([batch_indices, hands], axis=2)
+        return indices
 
     def call(self, inputs, training=False):
         states, hands = inputs
         features = self.common(inputs, training=training)
-        policy = self.actor(features) + self.bias # include bias into logits to discourage discarding
+        policy = self.actor(features) + tf.cast(self.bias, features.dtype) # include bias into logits to discourage discarding
         mask = self.hands2mask(hands)
-        policy += mask # apply hand mask, silent non-hand cards by adding -1e9 to their logits
+        policy += tf.cast(mask, policy.dtype) # apply hand mask, silent non-hand cards by adding -1e9 to their logits
         value = self.critic(features) # expected return
-        return policy, value
-    
-    @tf.function(input_signature=input_signature)
-    def predict_move(self, states, hands):
-        policy, _ = self([states, hands])
         # gumbel max trick to sample from policy distribution without replacement
         # http://amid.fish/humble-gumbel
         noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(policy))))
-        logits = policy + noise
+        logits = policy + tf.cast(noise, policy.dtype)
         moves = tf.argsort(logits, axis=-1, direction='ASCENDING')
-        return moves
+        # recast to float32, int32 for compatibility
+        policy = tf.cast(policy, tf.float32)
+        moves = tf.cast(moves, tf.int32)
+        value = tf.cast(value, tf.float32)
+        return policy, moves, value

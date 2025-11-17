@@ -3,7 +3,6 @@ from tqdm import tqdm
 
 from const import CARDS
 from example import parse_example
-from model import ActorCritic
 
 
 input_signature = (
@@ -73,7 +72,7 @@ def train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=512):
         for metric_acc in metrices_acc:
             metric_acc.assign(0.0)
         with tf.GradientTape() as tape:
-            logits, values = model([v, h], training=True)
+            logits, _, values = model([v, h], training=True)
             metrices = compute_loss_ppo(logits, values, y, r, l)
         loss = metrices[0]
         # compute grads
@@ -93,7 +92,7 @@ def train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=512):
     for i, item in enumerate(raw):
         d = tf.data.Dataset.from_tensor_slices(item).batch(batch_size, num_parallel_calls=tf.data.AUTOTUNE)
         dataset = dataset.concatenate(d) if i > 0 else d
-    dataset = dataset.cache("cache").prefetch(buffer_size=tf.data.AUTOTUNE)
+    dataset = dataset.cache().prefetch(buffer_size=tf.data.AUTOTUNE)
 
     # run ppo
     for e in tqdm(range(epoch)):
@@ -146,11 +145,14 @@ def train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=512):
 
 if __name__ == "__main__":
     import time
+    from tensorflow.keras import mixed_precision
+    mixed_precision.set_global_policy('mixed_float16')
+    from model import ActorCritic
     # path
     p_data = "data/exploiter.tfrecord"
     p_model = "model/exploiter.keras"
     # Faster with CPU rather than GPU
-    #tf.config.set_visible_devices([], 'GPU')
+    tf.config.set_visible_devices([], 'GPU')
     # Start training
     t1 = time.time()
     train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=4096)

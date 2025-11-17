@@ -6,6 +6,7 @@ from uuid import uuid4
 import logging
 import random
 
+from tqdm import tqdm
 import numpy as np
 import tensorflow as tf
 
@@ -48,12 +49,12 @@ def test(num_game, fn_model=None, fn_others=[None], w_others=None):
     # run games in parallel
     totals = defaultdict(list)
     ranks = defaultdict(list)
-    max_workers = 4
+    max_workers = 8
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         f2n = {executor.submit(test_single, game): game.n for game in games}
-        for future in as_completed(f2n):
+        for future in tqdm(as_completed(f2n), total=len(f2n)):
             history, message = future.result()
-            print(message)
+            #print(message)
             # process history
             _, [scores, *_], _, _ = history[0].pop()
             total = scores["total"]
@@ -94,17 +95,17 @@ if __name__ == "__main__":
     p_exploiter = "model/exploiter.keras"
     model = tf.keras.models.load_model(p_model)
     exploiter = tf.keras.models.load_model(p_exploiter)
-    fn_model = model.predict_move.get_concrete_function(
+    fn_model = tf.function(lambda state, hand: model([state, hand])[:2]).get_concrete_function(
         tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32),
         tf.TensorSpec(shape=[None, None], dtype=tf.int32)
     )
-    fn_exploiter = exploiter.predict_move.get_concrete_function(
+    fn_exploiter = tf.function(lambda state, hand: exploiter([state, hand])[:2]).get_concrete_function(
         tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32),
         tf.TensorSpec(shape=[None, None], dtype=tf.int32)
     )
-    num_game = 100
+    num_game = 10
     t1 = time.time()
-    #test(num_game, fn_model=fn_model, fn_others=[None], w_others=None)
-    test(num_game, fn_model=fn_exploiter, fn_others=[fn_model], w_others=None)
+    test(num_game, fn_model=fn_model, fn_others=[None], w_others=None)
+    #test(num_game, fn_model=fn_exploiter, fn_others=[fn_model], w_others=None)
     t2 = time.time()
     print("Elapsed time : %.2f second" % (t2 - t1))

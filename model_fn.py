@@ -1,10 +1,6 @@
 from const import CARDS
 
 import tensorflow as tf
-from tensorflow.keras import mixed_precision
-
-# mixed precision policy
-mixed_precision.set_global_policy('mixed_bfloat16')
 
 
 @tf.keras.utils.register_keras_serializable()
@@ -73,7 +69,7 @@ class HandsToMask(tf.keras.layers.Layer):
         updates = tf.ones_like(indices[:,0], dtype=tf.float32)
         shape = tf.stack([batch, self.num_card * 3])
         scatter = tf.scatter_nd(indices, updates, shape) - 1.0
-        mask = scatter * 1e9
+        mask = scatter * 1e2
         return mask
 
     def get_config(self):
@@ -107,7 +103,6 @@ class PredictMove(tf.keras.layers.Layer):
         noise = -tf.math.log(-tf.math.log(tf.random.uniform(tf.shape(policy), dtype=policy.dtype)))
         logits = policy + noise
         moves = tf.argsort(logits, axis=-1, direction='ASCENDING')
-        moves = tf.cast(moves, tf.uint8)
         return moves
 
     def get_config(self):
@@ -215,9 +210,13 @@ def create_ac(num_card=len(CARDS), d_final=128, d_model=256, d_ff=128, num_heads
     value = get_ff(features, d_final, d_ff, dropout_rate=dropout_rate)
     value = tf.keras.layers.Dense(1)(value)
     moves = PredictMove(name='predict_move')(policy)
+    # recast to float32, int32 for compatibility
+    policy = tf.keras.ops.cast(policy, tf.float32)
+    moves = tf.keras.ops.cast(moves, tf.int32)
+    value = tf.keras.ops.cast(value, tf.float32)
 
     inputs = [states, hands]
-    outputs = [policy, value, moves]
+    outputs = [policy, moves, value]
     model = tf.keras.Model(inputs=inputs, outputs=outputs, name="actor_critic")
 
     return model

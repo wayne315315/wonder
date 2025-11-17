@@ -19,7 +19,8 @@ class AIPlayer(Player):
         if not asked:
             v = self.helper.s2v(state, record) # shape (19 * n + 6, 7)
             h = self.helper.h2v(hand)
-            self.buffer = self.fn(v, h).numpy()[0].tolist()
+            _, moves = self.fn(v, h)
+            self.buffer = moves.numpy()[0].tolist()
         else:
             self.record[-1][-1] = False # last move is invalid
         output = self.buffer.pop()

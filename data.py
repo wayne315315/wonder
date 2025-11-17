@@ -135,13 +135,7 @@ def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9
             vs, hs, ys, rs = f.result()
             yield (vs, hs, ys, rs)
 
-def write_data(p_data, p_model, num_game, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, batch_size=512, max_workers=4):
-    # load model and its concrete function
-    model = tf.keras.models.load_model(p_model)
-    fn_model = model.predict_move.get_concrete_function(
-        tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32),
-        tf.TensorSpec(shape=[None, None], dtype=tf.int32)
-    )
+def write_data(p_data, num_game, fn_model, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, max_workers=4, batch_size=4096):
     data_iterator = data_gen(num_game, fn_model=fn_model, fn_others=fn_others, w_others=w_others, gamma=gamma, penalty=penalty, max_workers=max_workers)
     vs = defaultdict(list)
     hs = defaultdict(list)
@@ -154,12 +148,12 @@ def write_data(p_data, p_model, num_game, fn_others=[None], w_others=None, gamma
             hs[key].append(hs_[key])
             ys[key].append(ys_[key])
             rs[key].append(rs_[key])
-    writer = tf.io.TFRecordWriter(p_data)
+    writer = tf.io.TFRecordWriter(str(p_data))
     for key in vs:
         for item in [vs, hs, ys, rs]:
             item[key] = tf.concat(item[key], axis=0)
-        logits, _ = model.predict([vs[key], hs[key]], batch_size=batch_size)
-        ls[key] = logits
+        inputs = tf.data.Dataset.from_tensor_slices((vs[key], hs[key])).batch(batch_size)
+        ls[key] = tf.concat([fn_model(v, h)[0] for v, h in inputs], axis=0)
         v, h, y, r, l = vs[key], hs[key], ys[key], rs[key], ls[key]
         example = create_example(v, h, y, r, l)
         writer.write(example.SerializeToString())
@@ -169,25 +163,34 @@ def write_data(p_data, p_model, num_game, fn_others=[None], w_others=None, gamma
 if __name__ == "__main__":
     import time
     import tensorflow as tf
+    from tensorflow.keras import mixed_precision
     from model import ActorCritic
 
     # Faster with CPU rather than GPU
     tf.config.set_visible_devices([], 'GPU')
+
+    # Set mixed precision policy
+    mixed_precision.set_global_policy('mixed_float16')
 
     # path
     p_data = "data/exploiter.tfrecord"
     p_model = "model/exploiter.keras"
     p_other = "model/base.keras"
 
-    # load model
+    # load model and its concrete function
+    model = tf.keras.models.load_model(p_model)
+    fn_model = tf.function(lambda state, hand: model([state, hand])[:2]).get_concrete_function(
+        tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32),
+        tf.TensorSpec(shape=[None, None], dtype=tf.int32)
+    )
     other = tf.keras.models.load_model(p_other)
-    fn_other = other.predict_move.get_concrete_function(
+    fn_other = tf.function(lambda state, hand: other([state, hand])[:2]).get_concrete_function(
         tf.TensorSpec(shape=[None, None, 7], dtype=tf.int32),
         tf.TensorSpec(shape=[None, None], dtype=tf.int32)
     )
     # write TFRecord
-    num_game = 100
+    num_game = 10
     t1 = time.time()
-    write_data(p_data, p_model, num_game, fn_others=[fn_other])
+    write_data(p_data, num_game, fn_model, fn_others=[fn_other])
     t2 = time.time()
     print(f"Time taken: {t2 - t1} seconds")
