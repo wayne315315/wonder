@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Name for the on-demand job
+  name: wonder-intel-run-light
+spec:
+  # This 'template' block was inside 'jobTemplate.spec'
+  template:
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-nodepool: intel-pool-light
+      containers:
+      - name: wonder
+        image: us-central1-docker.pkg.dev/wonder-477103/wonder/wonder:v5
+        command: ["/bin/sh", "-c", "python main.py --model gs://wayne315315/wonder/model_bfloat16/meow.keras --other gs://wayne315315/wonder/model_bfloat16/base.keras --data meow.tfrecord --policy mixed_bfloat16 --round 1000"]
+        resources:
+          requests:
+            cpu: "7.5"
+            memory: "15Gi"
+          limits:
+            cpu: "8"
+            memory: "30Gi"
+
+      # 2. This is the "key" that unlocks the node
+      #    Matching your NoExecute taint
+      tolerations:
+      - key: "intel-light"
+        operator: "Equal"
+        value: "wonder"
+        effect: "NoExecute"
+        
+      restartPolicy: Never
+      
+  # Optional: Cleans up the pod 60 seconds after it finishes
+  ttlSecondsAfterFinished: 60
+  

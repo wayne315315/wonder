@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir tensorflow==2.17.1, tqdm==4.67.1
 COPY . .
 
 # Run
-CMD ["./run.sh"]
+CMD ["bash"]

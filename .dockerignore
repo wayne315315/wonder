@@ -12,4 +12,6 @@ app/
 config/
 data/
 model/
+model_float16/
+model_bfloat16/
 cache*

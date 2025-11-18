@@ -40,7 +40,9 @@ def compute_loss_ppo(logits, values, actions, rewards, logits_old, epsilon=0.2, 
     logsoftmax = tf.gather(logsoftmax, actions, batch_dims=1) # log(p(a|s)) TensorShape([None])
     logsoftmax_old = tf.nn.log_softmax(logits_old, axis=1) # log(p_old(ai|s), ...) TensorShape([None, 231])
     logsoftmax_old = tf.gather(logsoftmax_old, actions, batch_dims=1) # log(p_old(a|s)) TensorShape([None])
-    ratio = tf.exp(logsoftmax - logsoftmax_old)
+    log_ratio = logsoftmax - logsoftmax_old
+    log_ratio = tf.clip_by_value(log_ratio, -3.0, 3.0) # clip to avoid NaN
+    ratio = tf.exp(log_ratio)
     surr1 = ratio * advantages
     surr2 = tf.clip_by_value(ratio, 1.0 - epsilon, 1.0 + epsilon) * advantages
     loss_actor_ppo = -tf.reduce_sum(tf.minimum(surr1, surr2))
@@ -59,7 +61,7 @@ def train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=512):
     # model
     model = tf.keras.models.load_model(p_model)
     # optimizer
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate, clipnorm=1.0)
     # metrices
     metrices_acc = [tf.Variable(0.0, trainable=False) for _ in range(5)]
     # grads
