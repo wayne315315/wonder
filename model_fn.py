@@ -40,6 +40,15 @@ class TotalEmbedding(tf.keras.layers.Layer):
         civ_emb_out = self.civ_emb(x[:, :, 4])
         face_emb_out = self.face_emb(x[:, :, 5])
         coin_emb_out = self.coin_emb(x[:, :, 6:])
+        ###
+        turn_emb_out = tf.cast(turn_emb_out, tf.float32)
+        card_emb_out = tf.cast(card_emb_out, tf.float32)
+        action_emb_out = tf.cast(action_emb_out, tf.float32)
+        pos_emb_out = tf.cast(pos_emb_out, tf.float32)
+        civ_emb_out = tf.cast(civ_emb_out, tf.float32)
+        face_emb_out = tf.cast(face_emb_out, tf.float32)
+        coin_emb_out = tf.cast(coin_emb_out, tf.float32)
+        ###
         total_emb = (turn_emb_out + card_emb_out + action_emb_out + 
                      pos_emb_out + civ_emb_out + face_emb_out + coin_emb_out)
         return total_emb
