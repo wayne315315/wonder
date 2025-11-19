@@ -117,11 +117,12 @@ class RayFTPClient:
         Uploads a file OR a folder recursively.
         """
         if not remote_path:
-            remote_path = os.path.basename(local_path)
+            remote_path = local_path
 
         if os.path.isdir(local_path):
             self._upload_dir(local_path, remote_path)
         elif os.path.isfile(local_path):
+            self.mkdir(os.path.dirname(remote_path))
             self._upload_file(local_path, remote_path)
         else:
             print(f"❌ Local path not found: {local_path}")
@@ -166,7 +167,7 @@ class RayFTPClient:
         Downloads a file OR a folder recursively.
         """
         if not local_path:
-            local_path = os.path.basename(remote_path)
+            local_path = remote_path
 
         if self._is_remote_dir(remote_path):
             self._download_dir(remote_path, local_path)
