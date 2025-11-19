@@ -14,11 +14,15 @@ from train import train
 def master(p_data, p_model, p_other="", num_game=10, policy="mixed_float16"):
     t1 = time.time()
     # download model from FTP server
+    t3 = time.time()
     with RayFTPClient() as ftp:
         # download the latest model
         ftp.download(p_model)
+    t4 = time.time()
+    print(f"Master download took: {t4 - t3} seconds")
 
     # set policy
+    tf.config.set_visible_devices([], 'GPU')
     mixed_precision.set_global_policy(policy)
 
     # load model and concrete function
@@ -38,8 +42,11 @@ def master(p_data, p_model, p_other="", num_game=10, policy="mixed_float16"):
     # write TFRecord
     write_data(p_data, num_game, fn_model, fn_others=[fn_other])
     # upload data to FTP server
+    t3 = time.time()
     with RayFTPClient() as ftp:
         ftp.upload(p_data)
+    t4 = time.time()
+    print(f"Master upload took: {t4 - t3} seconds")
     t2 = time.time()
     print(f"Master took: {t2 - t1} seconds")
 
@@ -52,10 +59,15 @@ def worker(p_data, p_model, policy="mixed_float16", round=100, batch_size=128):
     from model import ActorCritic
     from model_fn import create_ac
     from train import train
+    from ftp import RayFTPClient
+
     # download data and model from FTP server
+    t3 = time.time()
     with RayFTPClient() as ftp:
         ftp.download(p_data)
         ftp.download(p_model)
+    t4 = time.time()
+    print(f"Worker download took: {t4 - t3} seconds")
 
     # set policy
     mixed_precision.set_global_policy(policy)
@@ -63,15 +75,26 @@ def worker(p_data, p_model, policy="mixed_float16", round=100, batch_size=128):
     train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=batch_size)
 
     # upload model to FTP server
+    t3 = time.time()
     with RayFTPClient() as ftp:
         ftp.upload(p_model)
+    t4 = time.time()
+    print(f"Worker upload took: {t4 - t3} seconds")
 
     t2 = time.time()
-    print(f"Master took: {t2 - t1} seconds")
+    print(f"Worker took: {t2 - t1} seconds")
 
 
-def main(p_model, p_other="", p_data="data/woof.tfrecord", policy="mixed_float16", round=100):
-    mixed_precision.set_global_policy(policy)
+def main(p_model, p_other="model_float16/base.keras", p_data="data/woof.tfrecord", policy="mixed_float16", round=100):
+    # initialize ray
+    ray.init(
+        address='auto', 
+        runtime_env={
+            "working_dir": ".",
+            "excludes": ["app/", "data/", "model_bfloat16/", "model_float16/", "model_float32/"]
+        }
+    )
+
     # path
     for r in range(round):
         master(p_data, p_model, p_other=p_other)

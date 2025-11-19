@@ -10,14 +10,14 @@ import sys
 FTP_PORT = 2121
 FTP_USER = "rayuser"
 FTP_PASS = "raypass"
-FTP_ROOT_DIR = "/tmp/ftp/"
+FTP_ROOT_DIR = "/home/linhsuanyu/ftp/"
 PASSIVE_PORTS = range(60000, 60010)
 ACTOR_NAME = "Global_Desktop_FTP"
 
 # ---------------------------------------------------------
 # THE PERSISTENT ACTOR (Runs on Desktop)
 # ---------------------------------------------------------
-@ray.remote(resources={"arch_x86": 0.01})
+@ray.remote(resources={"arch_x86": 0.001})
 class PersistentFTPServer:
     def __init__(self):
         self.server = None
