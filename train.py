@@ -92,8 +92,15 @@ def train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=512):
     # load the data
     raw = tf.data.TFRecordDataset(p_data).map(parse_example, num_parallel_calls=tf.data.AUTOTUNE)
     for i, item in enumerate(raw):
-        d = tf.data.Dataset.from_tensor_slices(item).batch(batch_size, num_parallel_calls=tf.data.AUTOTUNE)
+        d = tf.data.Dataset.from_tensor_slices(item).map(lambda v,h,y,r,l: (v,h,y,r), num_parallel_calls=tf.data.AUTOTUNE).batch(batch_size, num_parallel_calls=tf.data.AUTOTUNE)
         dataset = dataset.concatenate(d) if i > 0 else d
+    dataset = dataset.cache().prefetch(buffer_size=tf.data.AUTOTUNE)
+
+    # precompute old logits
+    for i, (v, h, _, _) in enumerate(dataset):
+        l = tf.data.Dataset.from_tensors(model([v, h])[0])
+        ls = ls.concatenate(l) if i > 0 else l
+    dataset = tf.data.Dataset.zip((dataset, ls)).map(lambda item, l: (*item,l), num_parallel_calls=tf.data.AUTOTUNE)
     dataset = dataset.cache().prefetch(buffer_size=tf.data.AUTOTUNE)
 
     # run ppo
