@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 import time
 from ftplib import FTP, error_perm
 
@@ -181,10 +182,10 @@ class RayFTPClient:
             local_dir = os.path.dirname(local_path)
             if local_dir and not os.path.exists(local_dir):
                 os.makedirs(local_dir)
-
             with open(local_path, "wb") as f:
                 self.ftp.retrbinary(f"RETR {remote_path}", f.write)
         except Exception as e:
+            shutil.rmtree(local_dir, ignore_errors=True)
             print(f"❌ Failed to download {remote_path}: {e}")
 
     def _download_dir(self, remote_dir, local_dir):

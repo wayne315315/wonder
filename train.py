@@ -57,11 +57,30 @@ def compute_loss_ppo(logits, values, actions, rewards, logits_old, epsilon=0.2, 
 
 
 
-def train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=512):
+def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size=512):
     # model
     model = tf.keras.models.load_model(p_model)
     # optimizer
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate, clipnorm=1.0)
+    ### NEW: Setup Independent Optimizer Checkpoint ###
+    # We create a Checkpoint object tracking ONLY the optimizer.
+    ckpt_opt = tf.train.Checkpoint(optimizer=optimizer)
+
+    # We use a Manager to handle file versioning (keep last 3).
+    # It saves to a separate folder so it doesn't mess with your model file.
+    ckpt_manager = tf.train.CheckpointManager(ckpt_opt, p_optimizer, max_to_keep=1)
+
+    # ### NEW: Restore Optimizer State (Lazy Loading) ###
+    # If a checkpoint exists, this schedules the values to be loaded.
+    # They will physically load the moment 'apply_gradients' is called for the first time.
+    if ckpt_manager.latest_checkpoint:
+        status = ckpt_opt.restore(ckpt_manager.latest_checkpoint)
+        status.expect_partial()
+        print(f"Restored optimizer state from {ckpt_manager.latest_checkpoint}")
+    else:
+        print("No optimizer checkpoint found. Starting fresh.")
+    ###
+
     # metrices
     metrices_acc = [tf.Variable(0.0, trainable=False) for _ in range(5)]
     # grads
@@ -126,12 +145,14 @@ def train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=512):
             expected_returns.append(expected_return.numpy())
             n = v.shape[0]
             total += n
+            """
             tf.print("batch size:", n)
             tf.print("loss:", loss/n)
             tf.print("loss actor:", loss_actor/n)
             tf.print("loss critic:", loss_critic/n)
             tf.print("loss entropy:", loss_entropy/n)
             tf.print("expected return:", expected_return/n)
+            """
 
         # compute the mean for all matrices in this epoch
         loss_avg = sum(losses)/total
@@ -148,9 +169,13 @@ def train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=512):
 
         # apply grads for each epoch
         optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
-        # save model
-        model.save(p_model)
-        print("model saved", flush=True)
+    # save model
+    model.save(p_model)
+    print("model saved", flush=True)
+
+    ### NEW: Save Optimizer Separately ###
+    ckpt_manager.save()
+    print("optimizer saved", flush=True)
 
 if __name__ == "__main__":
     import time
@@ -160,10 +185,11 @@ if __name__ == "__main__":
     # path
     p_data = "data/exploiter.tfrecord"
     p_model = "model/exploiter.keras"
+    p_optimizer = "optimizer/exploiter"
     # Faster with CPU rather than GPU
     tf.config.set_visible_devices([], 'GPU')
     # Start training
     t1 = time.time()
-    train(p_data, p_model, epoch=10, learning_rate=1e-4, batch_size=4096)
+    train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size=4096)
     t2 = time.time()
     print(f"Time taken: {t2 - t1} seconds")

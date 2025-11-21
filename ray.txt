@@ -1,5 +1,6 @@
 - mac m1:
 RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER=1 ray start --head --port=6379 --dashboard-host=0.0.0.0 --node-ip-address=0.0.0.0 --object-manager-port=8076  --resources='{"arch_arm": 1, "gpu_type_metal": 1}' --disable-usage-stats
+script -F woof.log python main.py --model model_float16/woof.keras --other model_float16/base.keras --round 1000
 
 - desktop wsl
 ray start --head --port=6379 --dashboard-host=0.0.0.0 --node-ip-address=100.111.210.199 --resources='{"arch_x86": 1, "gpu_type_cuda": 1}' --disable-usage-stats

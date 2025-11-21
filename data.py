@@ -148,6 +148,18 @@ def write_data(p_data, num_game, fn_model, fn_others=[None], w_others=None, gamm
             hs[key].append(hs_[key])
             ys[key].append(ys_[key])
             rs[key].append(rs_[key])
+    ###
+    writer = tf.io.TFRecordWriter(str(p_data))
+    for key in vs:
+        for item in [vs, hs, ys, rs]:
+            item[key] = tf.concat(item[key], axis=0)
+        ls[key] = tf.zeros_like(rs[key], dtype=tf.float32)
+        v, h, y, r, l = vs[key], hs[key], ys[key], rs[key], ls[key]
+        example = create_example(v, h, y, r, l)
+        writer.write(example.SerializeToString())
+    writer.close()
+    ###
+    """
     writer = tf.io.TFRecordWriter(str(p_data))
     for key in vs:
         for item in [vs, hs, ys, rs]:
@@ -158,6 +170,7 @@ def write_data(p_data, num_game, fn_model, fn_others=[None], w_others=None, gamm
         example = create_example(v, h, y, r, l)
         writer.write(example.SerializeToString())
     writer.close()
+    """
 
 
 if __name__ == "__main__":
