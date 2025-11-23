@@ -205,7 +205,7 @@ def get_transformer(state, hand, num_card, num_layers, d_model, num_heads, d_ff,
 
 
 # functional API model to recreate ActorCritic structure without using any subclassing
-def create_ac(num_card=len(CARDS), d_final=128, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.1):
+def create_ac(num_card=len(CARDS), d_final=128, d_model=256, d_ff=128, num_heads=2, num_layers=2, dropout_rate=0.0):
     # create input layers
     states = tf.keras.Input(shape=(None, 7), dtype=tf.int32)
     hands = tf.keras.Input(shape=(None,), dtype=tf.int32)

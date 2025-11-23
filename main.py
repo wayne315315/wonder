@@ -1,5 +1,6 @@
 import time
 import ray
+from pathlib import Path
 from ftp import RayFTPClient
 
 import tensorflow as tf
@@ -11,19 +12,28 @@ from train import train
 
 
 # master node generate data
-def master(p_data, p_model, p_other="", num_game=100, policy="mixed_float16"):
+def master(p_data, p_model, p_other="", num_game=10, policy="mixed_float16"):
     t1 = time.time()
-    # download model from FTP server
-    t3 = time.time()
-    with RayFTPClient() as ftp:
-        # download the latest model
-        ftp.download(p_model)
-    t4 = time.time()
-    print(f"Master download took: {t4 - t3} seconds")
-
     # set policy
     tf.config.set_visible_devices([], 'GPU')
     mixed_precision.set_global_policy(policy)
+
+    # download model from FTP server
+    t3 = time.time()
+    try:
+        with RayFTPClient() as ftp:
+            # download the latest model
+            ftp.download(p_model)
+    except Exception as e:
+        print(f"Model {p_model} not found on FTP server: {str(e)}")
+        # create a new model if not found
+        model = create_ac()
+        model.save(p_model)
+        # upload model to FTP server
+        with RayFTPClient() as ftp:
+            ftp.upload(p_model)
+    t4 = time.time()
+    print(f"Master download took: {t4 - t3} seconds")
 
     # load model and concrete function
     model = tf.keras.models.load_model(p_model)
@@ -40,7 +50,7 @@ def master(p_data, p_model, p_other="", num_game=100, policy="mixed_float16"):
     else:
         fn_other = None
     # write TFRecord
-    write_data(p_data, num_game, fn_model, fn_others=[fn_other])
+    write_data(p_data, num_game, fn_model, fn_others=[fn_other, None])
     # upload data to FTP server
     t3 = time.time()
     with RayFTPClient() as ftp:
@@ -52,7 +62,7 @@ def master(p_data, p_model, p_other="", num_game=100, policy="mixed_float16"):
 
 
 @ray.remote(num_gpus=1, resources={"arch_x86": 0.999, "gpu_type_cuda": 1})
-def worker(p_data, p_model, p_optimizer, policy="mixed_float16", batch_size=128):
+def worker(p_data, p_model, p_optimizer, policy="mixed_float16", epoch=10, batch_size=128):
     t1 = time.time()
     import tensorflow as tf
     from tensorflow.keras import mixed_precision
@@ -74,7 +84,7 @@ def worker(p_data, p_model, p_optimizer, policy="mixed_float16", batch_size=128)
     # set policy
     mixed_precision.set_global_policy(policy)
     # train
-    train(p_data, p_model, p_optimizer, epoch=30, learning_rate=1e-4, batch_size=batch_size)
+    train(p_data, p_model, p_optimizer, epoch=epoch, learning_rate=1e-4, batch_size=batch_size)
 
     # upload model to FTP server
     t3 = time.time()
@@ -88,7 +98,7 @@ def worker(p_data, p_model, p_optimizer, policy="mixed_float16", batch_size=128)
     print(f"Worker took: {t2 - t1} seconds")
 
 
-def main(p_model, p_other="model_float16/base.keras", p_data="data/woof.tfrecord", p_optimizer="/tmp/optimizer/woof", policy="mixed_float16", round=100):
+def main(p_model, p_other="model_float16/base.keras", policy="mixed_float16", num_game=10, epoch=10, round=100, batch_size=128):
     # initialize ray
     ray.init(
         address='auto', 
@@ -97,19 +107,21 @@ def main(p_model, p_other="model_float16/base.keras", p_data="data/woof.tfrecord
             "excludes": ["app/", "data/", "model_bfloat16/", "model_float16/", "model_float32/"]
         }
     )
-
     # path
+    p_data = Path("data", Path(p_model).stem).with_suffix(".tfrecord")
+
     for r in range(round):
         while True:
             try:
-                master(p_data, p_model, p_other=p_other)
+                master(p_data, p_model, p_other=p_other, policy=policy, num_game=num_game)
             except Exception as e:
                 print(f"Error in master: {e}, retrying...")
             else:
                 break
         while True:
+            p_optimizer = Path("/tmp/optimizer", Path(p_model).stem)
             try:
-                future = worker.remote(p_data, p_model, p_optimizer, policy="mixed_float16", batch_size=128)
+                future = worker.remote(p_data, p_model, p_optimizer, policy=policy, epoch=epoch, batch_size=batch_size)
                 ray.get(future)
             except Exception as e:
                 print(f"Error in worker: {e}, retrying...")
@@ -122,9 +134,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="model_float16/woof.keras")
     parser.add_argument("--other", type=str, default="")
-    parser.add_argument("--data", type=str, default="data/woof.tfrecord")
-    parser.add_argument("--optimizer", type=str, default="/tmp/optimizer/woof")
     parser.add_argument("--policy", type=str, default="mixed_float16")
+    parser.add_argument("--num_game", type=int, default=10)
+    parser.add_argument("--epoch", type=int, default=10)
     parser.add_argument("--round", type=int, default=100)
+    parser.add_argument("--batch_size", type=int, default=128)
     args = parser.parse_args()
-    main(args.model, p_other=args.other, p_data=args.data, p_optimizer=args.optimizer, policy=args.policy, round=args.round)
+    main(args.model, p_other=args.other, policy=args.policy, num_game=args.num_game, epoch=args.epoch, round=args.round, batch_size=args.batch_size)

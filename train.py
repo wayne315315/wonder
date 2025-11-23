@@ -29,7 +29,7 @@ def compute_loss_ppo(logits, values, actions, rewards, logits_old, epsilon=0.2, 
     loss_critic = huber_loss(rewards, values) # TensorShape([])
     advantages = rewards - tf.stop_gradient(values) # (g(a,s) - v(s))  TensorShape([None])
     # normalize advantages
-    advantages = (advantages - tf.reduce_mean(advantages)) / (tf.math.reduce_std(advantages) + 1e-8)
+    advantages = (advantages - tf.reduce_mean(advantages)) / (tf.math.reduce_std(advantages) + 1e-4)
 
     # loss entropy
     logsoftmax = tf.nn.log_softmax(logits, axis=1) # log(p(ai|s), ...) TensorShape([None, 231])
@@ -41,6 +41,8 @@ def compute_loss_ppo(logits, values, actions, rewards, logits_old, epsilon=0.2, 
     logsoftmax_old = tf.nn.log_softmax(logits_old, axis=1) # log(p_old(ai|s), ...) TensorShape([None, 231])
     logsoftmax_old = tf.gather(logsoftmax_old, actions, batch_dims=1) # log(p_old(a|s)) TensorShape([None])
     log_ratio = logsoftmax - logsoftmax_old
+    # kl divergence for monitoring
+    kld = tf.reduce_sum(-log_ratio)
     log_ratio = tf.clip_by_value(log_ratio, -3.0, 3.0) # clip to avoid NaN
     ratio = tf.exp(log_ratio)
     surr1 = ratio * advantages
@@ -53,7 +55,7 @@ def compute_loss_ppo(logits, values, actions, rewards, logits_old, epsilon=0.2, 
     # metrics
     probs = tf.gather(probs, actions, batch_dims=1) # p(a|s) TensorShape([None])
     expected_return = tf.reduce_sum(probs * rewards) # E[R|a,s] TensorShape([])
-    return loss, loss_actor_ppo, loss_critic, loss_entropy, expected_return
+    return loss, loss_actor_ppo, loss_critic, loss_entropy, expected_return, kld
 
 
 
@@ -82,7 +84,7 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
     ###
 
     # metrices
-    metrices_acc = [tf.Variable(0.0, trainable=False) for _ in range(5)]
+    metrices_acc = [tf.Variable(0.0, trainable=False) for _ in range(6)] # loss, loss_actor, loss_critic, loss_entropy, expected_return, kl_divergence
     # grads
     grads_acc = [tf.Variable(tf.zeros_like(tv, dtype=tf.float32), trainable=False) for tv in model.trainable_variables]
 
@@ -98,10 +100,17 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
         loss = metrices[0]
         # compute grads
         grads = tape.gradient(loss, model.trainable_variables)
+        # ensure loss and grads are finite number, not +inf, -inf, or NaN
+        is_finite = tf.reduce_all(tf.math.is_finite(loss))
+        is_finite &= tf.reduce_all([tf.reduce_all(tf.math.is_finite(g)) for g in grads if g is not None])
+
         # accumulate grads
-        for i in range(len(model.trainable_variables)):
-            if grads[i] is not None:
-                grads_acc[i].assign_add(grads[i])
+        if is_finite:
+            for i in range(len(model.trainable_variables)):
+                if grads[i] is not None:
+                    grads_acc[i].assign_add(grads[i])
+        else:
+            tf.print("Non-finite loss or gradients detected. Skipping gradient update for this batch.")
         # accumulate metrices
         for metric, metric_acc in zip(metrices, metrices_acc):
             if metric is not None:
@@ -133,16 +142,18 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
         losses_critic = []
         losses_entropy = []
         expected_returns = []
+        klds = []
         
         # compute gradients & metrices
         total = 0
         for v, h, y, r, l in dataset:
-            loss, loss_actor, loss_critic, loss_entropy, expected_return  = train_step(v,h,y,r,l)
+            loss, loss_actor, loss_critic, loss_entropy, expected_return, kld = train_step(v,h,y,r,l)
             losses.append(loss.numpy())
             losses_actor.append(loss_actor.numpy())
             losses_critic.append(loss_critic.numpy())
             losses_entropy.append(loss_entropy.numpy())
             expected_returns.append(expected_return.numpy())
+            klds.append(kld.numpy())
             n = v.shape[0]
             total += n
             """
@@ -151,6 +162,7 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
             tf.print("loss actor:", loss_actor/n)
             tf.print("loss critic:", loss_critic/n)
             tf.print("loss entropy:", loss_entropy/n)
+            tf.print("kl divergence:", kld/n)
             tf.print("expected return:", expected_return/n)
             """
 
@@ -160,15 +172,20 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
         loss_critic_avg = sum(losses_critic)/total
         loss_entropy_avg = sum(losses_entropy)/total
         expected_return_avg = sum(expected_returns)/total
+        kld_avg = sum(klds)/total
         print("epoch:", e)
         print("loss: %.2E" % loss_avg)
         print("loss actor: %.2E" % loss_actor_avg)
         print("loss critic: %.2E" % loss_critic_avg)
         print("loss entropy: %.2E" % loss_entropy_avg)
+        print("kl divergence: %.2E" % kld_avg)
         print("expected return: %.2E" % expected_return_avg)
-
         # apply grads for each epoch
         optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
+        # early stopping
+        if kld_avg > 0.02:
+            print("Early stopping at epoch", e, "due to large KL divergence.", flush=True)
+            break
     # save model
     model.save(p_model)
     print("model saved", flush=True)
