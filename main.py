@@ -62,7 +62,7 @@ def master(p_data, p_model, p_other="", num_game=10, policy="mixed_float16"):
 
 
 @ray.remote(num_gpus=1, resources={"arch_x86": 0.999, "gpu_type_cuda": 1})
-def worker(p_data, p_model, p_optimizer, policy="mixed_float16", epoch=10, batch_size=128):
+def worker(p_data, p_model, p_optimizer, policy="mixed_float16", epoch=10, batch_size=128, learning_rate=1e-4):
     t1 = time.time()
     import tensorflow as tf
     from tensorflow.keras import mixed_precision
@@ -84,7 +84,7 @@ def worker(p_data, p_model, p_optimizer, policy="mixed_float16", epoch=10, batch
     # set policy
     mixed_precision.set_global_policy(policy)
     # train
-    train(p_data, p_model, p_optimizer, epoch=epoch, learning_rate=1e-4, batch_size=batch_size)
+    train(p_data, p_model, p_optimizer, epoch=epoch, learning_rate=learning_rate, batch_size=batch_size)
 
     # upload model to FTP server
     t3 = time.time()
@@ -98,7 +98,7 @@ def worker(p_data, p_model, p_optimizer, policy="mixed_float16", epoch=10, batch
     print(f"Worker took: {t2 - t1} seconds")
 
 
-def main(p_model, p_other="model_float16/base.keras", policy="mixed_float16", num_game=10, epoch=10, round=100, batch_size=128):
+def main(p_model, p_other="model_float16/base.keras", policy="mixed_float16", num_game=10, epoch=10, round=100, batch_size=128, learning_rate=1e-4):
     # initialize ray
     ray.init(
         address='auto', 
@@ -121,7 +121,7 @@ def main(p_model, p_other="model_float16/base.keras", policy="mixed_float16", nu
         while True:
             p_optimizer = Path("/tmp/optimizer", Path(p_model).stem)
             try:
-                future = worker.remote(p_data, p_model, p_optimizer, policy=policy, epoch=epoch, batch_size=batch_size)
+                future = worker.remote(p_data, p_model, p_optimizer, policy=policy, epoch=epoch, batch_size=batch_size, learning_rate=learning_rate)
                 ray.get(future)
             except Exception as e:
                 print(f"Error in worker: {e}, retrying...")
@@ -139,5 +139,6 @@ if __name__ == "__main__":
     parser.add_argument("--epoch", type=int, default=10)
     parser.add_argument("--round", type=int, default=100)
     parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--learning_rate", type=float, default=1e-4)
     args = parser.parse_args()
-    main(args.model, p_other=args.other, policy=args.policy, num_game=args.num_game, epoch=args.epoch, round=args.round, batch_size=args.batch_size)
+    main(args.model, p_other=args.other, policy=args.policy, num_game=args.num_game, epoch=args.epoch, round=args.round, batch_size=args.batch_size, learning_rate=args.learning_rate)
