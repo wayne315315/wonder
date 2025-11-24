@@ -201,7 +201,7 @@ def get_transformer(state, hand, num_card, num_layers, d_model, num_heads, d_ff,
     x = get_decoder(hand, context, hand_emb, num_layers, d_model, num_heads, d_ff, dropout_rate=dropout_rate)
     x = tf.keras.ops.sum(x, axis=1)
     features = tf.keras.layers.Dense(d_final)(x) # (batch_size, d_final)
-    return features
+    return features, context
 
 
 # functional API model to recreate ActorCritic structure without using any subclassing
@@ -211,7 +211,7 @@ def create_ac(num_card=len(CARDS), d_final=128, d_model=256, d_ff=128, num_heads
     hands = tf.keras.Input(shape=(None,), dtype=tf.int32)
     bias = tf.constant([[-1e1 if i % 3 == 2 else 0.0 for i in range(num_card * 3)]], dtype=tf.float32)
     # compute output layers
-    features = get_transformer(states, hands, num_card, num_layers, d_model, num_heads, d_ff, d_final, dropout_rate=dropout_rate)
+    features, context = get_transformer(states, hands, num_card, num_layers, d_model, num_heads, d_ff, d_final, dropout_rate=dropout_rate)
     mask = HandsToMask(num_card, name='hand2mask')(hands)
     policy = get_ff(features, d_final, d_ff, dropout_rate=dropout_rate)
     policy = tf.keras.layers.Dense(num_card * 3)(policy)
@@ -219,13 +219,19 @@ def create_ac(num_card=len(CARDS), d_final=128, d_model=256, d_ff=128, num_heads
     value = get_ff(features, d_final, d_ff, dropout_rate=dropout_rate)
     value = tf.keras.layers.Dense(1)(value)
     moves = PredictMove(name='predict_move')(policy)
+    # auxiliary outputs - scores
+    scores = context
+    for _ in range(num_layers):
+        scores = get_encoder_layer(scores, d_model, num_heads, d_ff, dropout_rate=dropout_rate)
+    scores = tf.keras.layers.GlobalMaxPooling1D()(scores)
+    scores = tf.keras.layers.Dense(9)(scores)
     # recast to float32, int32 for compatibility
     policy = tf.keras.ops.cast(policy, tf.float32)
     moves = tf.keras.ops.cast(moves, tf.int32)
     value = tf.keras.ops.cast(value, tf.float32)
 
     inputs = [states, hands]
-    outputs = [policy, moves, value]
+    outputs = [policy, moves, value, scores]
     model = tf.keras.Model(inputs=inputs, outputs=outputs, name="actor_critic")
 
     return model

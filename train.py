@@ -10,18 +10,21 @@ input_signature = (
     tf.TensorSpec(shape=[None, None], dtype=tf.int32), # hs
     tf.TensorSpec(shape=[None], dtype=tf.int32), # ys
     tf.TensorSpec(shape=[None], dtype=tf.float32), # rs
+    tf.TensorSpec(shape=[None, 9], dtype=tf.float32), # ss
     tf.TensorSpec(shape=[None, 3 * len(CARDS)], dtype=tf.float32) # ls
 )
 
-def compute_loss_ppo(logits, values, actions, rewards, logits_old, epsilon=0.2, entropy_coeff=0.01):
+def compute_loss_ppo(logits, values, scores, actions, rewards, scores_true, logits_old, epsilon=0.2, entropy_coeff=0.01, mse_coeff=0.1):
+    # (logits, values, y, r, s, l)
     # inputs : v, h, y_true -> outputs : p(a|s), v(s)
     # inputs : rewards -> outputs: g(a,s)
     # vanilla loss_actor = -log(p(a|s)) * (g(a,s) - v(s))
     # ratio = p(a|s) / p_old(a|s)
     # loss_actor_ppo = -min(ratio * advantage_norm, clip(ratio, 1-epsilon, 1+epsilon) * advantage_norm)
     # loss_critic = huber_loss(g(a,s), v(s))
+    # loss_score = mse_loss(score_true, score_pred)
     # loss = loss_actor_ppo + loss_critic
-    # TensorShape([None, 231]) TensorShape([None, 1]) TensorShape([None]) TensorShape([None]) TensorShape([None, 231])
+    # TensorShape([None, 231]) TensorShape([None, 1]) TensorShape([None]) TensorShape([None]) TensorShape([None, 9]) TensorShape([None, 231])
     
     # loss critic
     huber_loss = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.SUM)
@@ -49,13 +52,29 @@ def compute_loss_ppo(logits, values, actions, rewards, logits_old, epsilon=0.2, 
     surr2 = tf.clip_by_value(ratio, 1.0 - epsilon, 1.0 + epsilon) * advantages
     loss_actor_ppo = -tf.reduce_sum(tf.minimum(surr1, surr2))
 
+    # loss score
+    # 1. Create a mask for rows where NOT all values are 0.0
+    # axis=1 looks across the 9 columns. If any value is != 0, the row is kept.
+    mask = tf.reduce_any(tf.not_equal(scores_true, 0.0), axis=1)
+    # 2. Filter both tensors to keep only the valid rows
+    scores_true_masked = tf.boolean_mask(scores_true, mask)
+    scores_masked = tf.boolean_mask(scores, mask)
+    # 3. Calculate MSE Loss
+    mse_loss = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.SUM)
+    # We add a check to ensure we don't calculate loss on empty tensors if all rows were 0
+    loss_score = tf.cond(
+        tf.reduce_any(mask),
+        lambda: mse_loss(scores_true_masked, scores_masked),
+        lambda: 0.0
+    )
+
     # overall loss
-    loss = loss_actor_ppo + loss_critic + entropy_coeff * loss_entropy
+    loss = loss_actor_ppo + loss_critic + entropy_coeff * loss_entropy + mse_coeff * loss_score
 
     # metrics
     probs = tf.gather(probs, actions, batch_dims=1) # p(a|s) TensorShape([None])
     expected_return = tf.reduce_sum(probs * rewards) # E[R|a,s] TensorShape([])
-    return loss, loss_actor_ppo, loss_critic, loss_entropy, expected_return, kld
+    return loss, loss_actor_ppo, loss_critic, loss_entropy, loss_score, expected_return, kld
 
 
 
@@ -84,19 +103,19 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
     ###
 
     # metrices
-    metrices_acc = [tf.Variable(0.0, trainable=False) for _ in range(6)] # loss, loss_actor, loss_critic, loss_entropy, expected_return, kl_divergence
+    metrices_acc = [tf.Variable(0.0, trainable=False) for _ in range(7)] # loss, loss_actor, loss_critic, loss_entropy, loss_score, expected_return, kl_divergence
     # grads
     grads_acc = [tf.Variable(tf.zeros_like(tv, dtype=tf.float32), trainable=False) for tv in model.trainable_variables]
 
     # custom train step
     @tf.function(input_signature=input_signature)
-    def train_step(v, h, y, r, l):
+    def train_step(v, h, y, r, s, l):
         # reset metrices_acc
         for metric_acc in metrices_acc:
             metric_acc.assign(0.0)
         with tf.GradientTape() as tape:
-            logits, _, values = model([v, h], training=True)
-            metrices = compute_loss_ppo(logits, values, y, r, l)
+            logits, _, values, scores = model([v, h], training=True)
+            metrices = compute_loss_ppo(logits, values, scores, y, r, s, l)
         loss = metrices[0]
         # compute grads
         grads = tape.gradient(loss, model.trainable_variables)
@@ -112,6 +131,7 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
         else:
             tf.print("Non-finite loss or gradients detected. Skipping gradient update for this batch.")
         # accumulate metrices
+        assert len(metrices) == len(metrices_acc) == 7
         for metric, metric_acc in zip(metrices, metrices_acc):
             if metric is not None:
                 metric_acc.assign_add(metric)
@@ -120,12 +140,12 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
     # load the data
     raw = tf.data.TFRecordDataset(p_data).map(parse_example, num_parallel_calls=tf.data.AUTOTUNE)
     for i, item in enumerate(raw):
-        d = tf.data.Dataset.from_tensor_slices(item).map(lambda v,h,y,r,l: (v,h,y,r), num_parallel_calls=tf.data.AUTOTUNE).batch(batch_size, num_parallel_calls=tf.data.AUTOTUNE)
+        d = tf.data.Dataset.from_tensor_slices(item).batch(batch_size, num_parallel_calls=tf.data.AUTOTUNE)
         dataset = dataset.concatenate(d) if i > 0 else d
     dataset = dataset.cache().prefetch(buffer_size=tf.data.AUTOTUNE)
 
     # precompute old logits
-    for i, (v, h, _, _) in enumerate(dataset):
+    for i, (v, h, _, _, _) in enumerate(dataset):
         l = tf.data.Dataset.from_tensors(model([v, h])[0])
         ls = ls.concatenate(l) if i > 0 else l
     dataset = tf.data.Dataset.zip((dataset, ls)).map(lambda item, l: (*item,l), num_parallel_calls=tf.data.AUTOTUNE)
@@ -141,17 +161,19 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
         losses_actor = []
         losses_critic = []
         losses_entropy = []
+        losses_score = []
         expected_returns = []
         klds = []
         
         # compute gradients & metrices
         total = 0
-        for v, h, y, r, l in dataset:
-            loss, loss_actor, loss_critic, loss_entropy, expected_return, kld = train_step(v,h,y,r,l)
+        for v, h, y, r, s, l in dataset:
+            loss, loss_actor, loss_critic, loss_entropy, loss_score, expected_return, kld = train_step(v,h,y,r,s,l)
             losses.append(loss.numpy())
             losses_actor.append(loss_actor.numpy())
             losses_critic.append(loss_critic.numpy())
             losses_entropy.append(loss_entropy.numpy())
+            losses_score.append(loss_score.numpy())
             expected_returns.append(expected_return.numpy())
             klds.append(kld.numpy())
             n = v.shape[0]
@@ -162,6 +184,7 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
             tf.print("loss actor:", loss_actor/n)
             tf.print("loss critic:", loss_critic/n)
             tf.print("loss entropy:", loss_entropy/n)
+            tf.print("loss score:", loss_score/n)
             tf.print("kl divergence:", kld/n)
             tf.print("expected return:", expected_return/n)
             """
@@ -171,6 +194,7 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
         loss_actor_avg = sum(losses_actor)/total
         loss_critic_avg = sum(losses_critic)/total
         loss_entropy_avg = sum(losses_entropy)/total
+        loss_score_avg = sum(losses_score)/total
         expected_return_avg = sum(expected_returns)/total
         kld_avg = sum(klds)/total
         print("epoch:", e)
@@ -178,12 +202,14 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
         print("loss actor: %.2E" % loss_actor_avg)
         print("loss critic: %.2E" % loss_critic_avg)
         print("loss entropy: %.2E" % loss_entropy_avg)
+        print("loss score: %.2E" % loss_score_avg)
         print("kl divergence: %.2E" % kld_avg)
         print("expected return: %.2E" % expected_return_avg)
         # apply grads for each epoch
         optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
         # early stopping
-        if kld_avg > 0.02:
+        #if kld_avg > 0.02:
+        if kld_avg > max(0.02 * loss_score_avg, 0.02): # to prevent data wasting
             print("Early stopping at epoch", e, "due to large KL divergence.", flush=True)
             break
     # save model
@@ -201,8 +227,8 @@ if __name__ == "__main__":
     from model import ActorCritic
     # path
     p_data = "data/exploiter.tfrecord"
-    p_model = "model/exploiter.keras"
-    p_optimizer = "optimizer/exploiter"
+    p_model = "model_float16/exploiter.keras"
+    p_optimizer = "/tmp/optimizer/exploiter"
     # Faster with CPU rather than GPU
     tf.config.set_visible_devices([], 'GPU')
     # Start training
