@@ -84,7 +84,9 @@ class Player(ABC):
         self.record.append(["score", [scores], [], True])
 
     def recv_notice(self, notice):
-        pass
+        if notice["type"] == "UPDATE":
+            items = ["civilian", "conflict", "science", "commerce", "guild", "wonder", "wealth", "coin", "total"]
+            self.record.append(["update", [notice[item] for item in items], [], True])
 
 
 class RandomPlayer(Player):
