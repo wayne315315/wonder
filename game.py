@@ -469,6 +469,9 @@ class Game:
             "moves": moves,
             "coins": self.coin()
         }
+        # real-time scores
+        scores = self.calculate()
+        notice.update(scores)
         self.send_notice(notice)
 
     def clear(self):
@@ -481,15 +484,16 @@ class Game:
             while hand:
                 self.discard.append(hand.pop())
 
-    def battle(self):
+    def battle(self, rehearsal=False):
         # each player only battle with its neighbors
         # Age I : WIN 1, LOSE -1, TIE 0
         # Age II: WIN 3, LOSE -1, TIE 0
         # Age III: WIN 5, LOSE -1, TIE 0
-        WIN = 2 * (self.turn // 6) - 1
+        WIN = 2 * ((self.turn + 5)// 6) - 1
         LOSE = -1
         TIE = 0
         scores = [[0, 0] for _ in range(self.n)]
+        conflicts = [self.conflict[i] for i in range(self.n)]
         for i in range(self.n):
             l = (i - 1) % self.n
             r = (i + 1) % self.n
@@ -500,19 +504,32 @@ class Game:
                     score = LOSE
                 else:
                     score = TIE
-                self.conflict[i] += score
                 scores[i][j] = score
+                conflicts[i] += score
         # send battle notice to all players
         notice = {
             "type": "BATTLE",
             "battle": scores
         }
-        self.send_notice(notice)
+        if not rehearsal:
+            self.send_notice(notice)
+            for i in range(self.n):
+                self.conflict[i] = conflicts[i]
+        return conflicts
     
-    def calculate(self):
+    def calculate(self, last=False):
+        # reset score to 0 except self.conflict
+        self.civilian = [0] * self.n
+        self.science = [0] * self.n
+        self.commerce = [0] * self.n
+        self.guild = [0] * self.n
+        self.wonder = [0] * self.n
+        self.wealth = [0] * self.n
+        self.total = [0] * self.n
+        # battle rehearsal:
+        conflicts = self.conflict if last else self.battle(rehearsal=True)
+
         for i in range(self.n):
-            l = (i - 1) % self.n
-            r = (i + 1) % self.n
             wonders = CIVS[self.civs[i]]["wonders"][self.faces[i]]
             # wealth score
             self.wealth[i] = self.state[i]["coin"] // 3
@@ -556,10 +573,10 @@ class Game:
                     if name == "Decorators Guild" and self.color[i]["wonder"] == len(wonders):
                         self.guild[i] += 7
             # total score
-            self.total[i] = sum([self.civilian[i], self.conflict[i], self.science[i], self.commerce[i], self.guild[i], self.wonder[i], self.wealth[i]])
+            self.total[i] = sum([self.civilian[i], conflicts[i], self.science[i], self.commerce[i], self.guild[i], self.wonder[i], self.wealth[i]])
         scores = {
             "civilian": self.civilian,
-            "conflict": self.conflict,
+            "conflict": conflicts,
             "science": self.science,
             "commerce": self.commerce,
             "guild": self.guild,
@@ -571,7 +588,8 @@ class Game:
         # send score notice to all players
         notice = {"type": "SCORE"}
         notice.update(scores)
-        self.send_notice(notice)
+        if last:
+            self.send_notice(notice)
         return scores
 
     def init(self):
@@ -678,7 +696,7 @@ class Game:
             self.turn += 1
 
         # Calculate score
-        scores = self.calculate()
+        scores = self.calculate(last=True)
         # Show score
         items = ["civilian", "conflict", "science", "commerce", "guild", "wonder", "wealth", "coin", "total"]
         for i in range(self.n):
