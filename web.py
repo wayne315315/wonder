@@ -4,14 +4,17 @@ from pathlib import Path
 
 import requests
 import tensorflow as tf
+from tensorflow.keras import mixed_precision
 
 from player import Player, RandomPlayer
 from rl import AIPlayer
 from const import Action
 from model import ActorCritic
+from model_fn import *
 
 # spare GPU for training
 tf.config.set_visible_devices([], 'GPU')
+mixed_precision.set_global_policy('mixed_float16')
 
 
 class WebPlayer(Player):
@@ -139,9 +142,10 @@ class WebAIPlayer(AIPlayer, WebPlayer):
     )
     def __init__(self, uid, url, events):
         if not WebAIPlayer.fn:
-            model_path = Path("model", "base.keras")
+            model_path = Path("model_float16", "base.keras")
             model = tf.keras.models.load_model(model_path)
-            WebAIPlayer.fn = model.predict_move.get_concrete_function(*WebAIPlayer.input_signature)
+            WebAIPlayer.fn = tf.function(lambda state, hand: model([state, hand])[:2]).get_concrete_function(*WebAIPlayer.input_signature)
+
         AIPlayer.__init__(self, WebAIPlayer.fn)
         WebPlayer.__init__(self, uid, url, events)
     
@@ -162,9 +166,9 @@ class WebAIExploiter(AIPlayer, WebPlayer):
     )
     def __init__(self, uid, url, events):
         if not WebAIExploiter.fn:
-            model_path = Path("model", "exploiter_best.keras")
+            model_path = Path("model_float16", "ac.keras")
             model = tf.keras.models.load_model(model_path)
-            WebAIExploiter.fn = model.predict_move.get_concrete_function(*WebAIExploiter.input_signature)
+            WebAIExploiter.fn = tf.function(lambda state, hand: model([state, hand])[:2]).get_concrete_function(*WebAIExploiter.input_signature)
         AIPlayer.__init__(self, WebAIExploiter.fn)
         WebPlayer.__init__(self, uid, url, events)
 
