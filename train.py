@@ -206,12 +206,15 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
         print("kl divergence: %.2E" % kld_avg)
         print("expected return: %.2E" % expected_return_avg)
         # apply grads for each epoch
-        optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
-        # early stopping
-        #if kld_avg > 0.02:
-        if kld_avg > max(0.02 * loss_score_avg, 0.02): # to prevent data wasting
-            print("Early stopping at epoch", e, "due to large KL divergence.", flush=True)
-            break
+        if kld_avg <= 0.02:
+            optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
+        else:
+            print("KL divergence too large, skipping gradient update for common backbone.", flush=True)
+            names = {"dense_19", "sequential_7", "multi_head_attention_7", "sequential_6", "multi_head_attention_6"}
+            grads_acc_aux = [g for g, v in zip(grads_acc, model.trainable_variables) if v.path.split("/")[0] in names]
+            vars_aux = [v for v in model.trainable_variables if v.path.split("/")[0] in names]
+            optimizer.apply_gradients(zip(grads_acc_aux, vars_aux))
+
     # save model
     model.save(p_model)
     print("model saved", flush=True)
