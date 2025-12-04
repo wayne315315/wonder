@@ -14,7 +14,7 @@ input_signature = (
     tf.TensorSpec(shape=[None, 3 * len(CARDS)], dtype=tf.float32) # ls
 )
 
-def compute_loss_ppo(logits, values, scores, actions, rewards, scores_true, logits_old, epsilon=0.2, entropy_coeff=0.01, mse_coeff=0.1):
+def compute_loss_ppo(logits, values, scores, actions, rewards, scores_true, logits_old, epsilon=0.2, entropy_coeff=0.01, mse_coeff=1e-3):
     # (logits, values, y, r, s, l)
     # inputs : v, h, y_true -> outputs : p(a|s), v(s)
     # inputs : rewards -> outputs: g(a,s)
@@ -39,13 +39,16 @@ def compute_loss_ppo(logits, values, scores, actions, rewards, scores_true, logi
     probs = tf.exp(logsoftmax) # p(ai|s) TensorShape([None, 231])
     loss_entropy = tf.reduce_sum(probs * logsoftmax) # we wanna maximize entropy
 
+    # kld calculation
+    logsoftmax_old = tf.nn.log_softmax(logits_old, axis=1) # log(p_old(ai|s), ...) TensorShape([None, 231])
+    probs_old = tf.exp(logsoftmax_old) # p_old(ai|s) TensorShape([None, 231])
+    kld = tf.reduce_sum(probs_old * (logsoftmax_old - logsoftmax)) # D_KL(p_old || p)
+
     # loss actor ppo
     logsoftmax = tf.gather(logsoftmax, actions, batch_dims=1) # log(p(a|s)) TensorShape([None])
-    logsoftmax_old = tf.nn.log_softmax(logits_old, axis=1) # log(p_old(ai|s), ...) TensorShape([None, 231])
     logsoftmax_old = tf.gather(logsoftmax_old, actions, batch_dims=1) # log(p_old(a|s)) TensorShape([None])
     log_ratio = logsoftmax - logsoftmax_old
     # kl divergence for monitoring
-    kld = tf.reduce_sum(-log_ratio)
     log_ratio = tf.clip_by_value(log_ratio, -3.0, 3.0) # clip to avoid NaN
     ratio = tf.exp(log_ratio)
     surr1 = ratio * advantages
@@ -82,7 +85,13 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
     # model
     model = tf.keras.models.load_model(p_model)
     # optimizer
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate, clipnorm=1.0)
+    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate=learning_rate,  # Start at your base rate
+        decay_steps=100,           # Decay every 10,000 steps (adjust based on dataset size)
+        decay_rate=0.96,             # Decay to 96% of previous rate
+        staircase=True               # If True, decay happens in discrete intervals
+    )
+    optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule, clipnorm=1.0)
     ### NEW: Setup Independent Optimizer Checkpoint ###
     # We create a Checkpoint object tracking ONLY the optimizer.
     ckpt_opt = tf.train.Checkpoint(optimizer=optimizer)
@@ -205,7 +214,20 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
         print("loss score: %.2E" % loss_score_avg)
         print("kl divergence: %.2E" % kld_avg)
         print("expected return: %.2E" % expected_return_avg)
+
+        # normalize grads_acc
+        for grad_acc in grads_acc:
+            grad_acc.assign(grad_acc / total)
+
         # apply grads for each epoch
+        optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
+
+        # kld check
+        if kld_avg > 0.02:
+            print("KL divergence too large", flush=True)
+            break
+
+        """
         if kld_avg <= 0.02:
             optimizer.apply_gradients(zip(grads_acc, model.trainable_variables))
         else:
@@ -214,6 +236,8 @@ def train(p_data, p_model, p_optimizer, epoch=10, learning_rate=1e-4, batch_size
             grads_acc_aux = [g for g, v in zip(grads_acc, model.trainable_variables) if v.path.split("/")[0] in names]
             vars_aux = [v for v in model.trainable_variables if v.path.split("/")[0] in names]
             optimizer.apply_gradients(zip(grads_acc_aux, vars_aux))
+            break
+        """
 
     # save model
     model.save(p_model)

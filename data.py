@@ -7,7 +7,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from player import RandomPlayer
-from rl import AIPlayer
+from rl import AIPlayer2
 from game import Game
 from helper import Adaptor
 from example import create_example
@@ -121,7 +121,7 @@ def epi_gen(game, gamma=0.9, penalty=-1.0):
     return vs, hs, ys, rs, ss
 
 
-def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, max_workers=4):
+def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0):
     """ Generate data for training/evaluation
     Args:
         num_game: The number of games for each number of the total players
@@ -140,21 +140,21 @@ def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9
 
     # Create all games
     games = [Game(n, random_face=False) for n in range(3, 8) for _ in range(num_game)]
+    AIPlayer2.batch_size = num_game
     for game in games:
-        fns = [fn_model] + random.choices(fn_others, weights=w_others, k=game.n-1)
-        players = [AIPlayer(fn) if fn else RandomPlayer() for fn in fns]
+        players = [AIPlayer2("model", fn_model)] + [AIPlayer2("other", fn) if fn else RandomPlayer() for fn in random.choices(fn_others, weights=w_others, k=game.n-1)]
         for i in range(game.n):
             game.register(i, players[i])
 
     # Start generating episodes
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with ThreadPoolExecutor(max_workers=num_game) as executor:
         f2n = {executor.submit(lambda g:epi_gen(g, gamma=gamma, penalty=penalty), game): game.n for game in games}
         for f in as_completed(f2n):
             vs, hs, ys, rs, ss = f.result()
             yield (vs, hs, ys, rs, ss)
 
-def write_data(p_data, num_game, fn_model, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, max_workers=4, batch_size=4096):
-    data_iterator = data_gen(num_game, fn_model=fn_model, fn_others=fn_others, w_others=w_others, gamma=gamma, penalty=penalty, max_workers=max_workers)
+def write_data(p_data, num_game, fn_model, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, batch_size=4096):
+    data_iterator = data_gen(num_game, fn_model=fn_model, fn_others=fn_others, w_others=w_others, gamma=gamma, penalty=penalty)
     vs = defaultdict(list)
     hs = defaultdict(list)
     ys = defaultdict(list)
@@ -210,7 +210,7 @@ if __name__ == "__main__":
         tf.TensorSpec(shape=[None, None], dtype=tf.int32)
     )
     # write TFRecord
-    num_game = 10
+    num_game = 100
     t1 = time.time()
     write_data(p_data, num_game, fn_model, fn_others=[fn_other])
     t2 = time.time()

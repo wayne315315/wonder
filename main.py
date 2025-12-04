@@ -3,16 +3,15 @@ import ray
 from pathlib import Path
 from ftp import RayFTPClient
 
-import tensorflow as tf
-from tensorflow.keras import mixed_precision
-from model import ActorCritic
-from model_fn import create_ac
-from data import write_data
-from train import train
-
 
 # master node generate data
 def master(p_data, p_model, p_other="", num_game=10, policy="mixed_float16"):
+    import tensorflow as tf
+    from tensorflow.keras import mixed_precision
+    from model import ActorCritic
+    from model_fn import create_ac
+    from data import write_data
+
     t1 = time.time()
     # set policy
     tf.config.set_visible_devices([], 'GPU')
@@ -24,6 +23,7 @@ def master(p_data, p_model, p_other="", num_game=10, policy="mixed_float16"):
         with RayFTPClient() as ftp:
             # download the latest model
             ftp.download(p_model)
+            #ftp.download(p_other) ###
     except Exception as e:
         print(f"Model {p_model} not found on FTP server: {str(e)}")
         # create a new model if not found
