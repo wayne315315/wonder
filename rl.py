@@ -51,12 +51,6 @@ class AIPlayer2(Player):
         Player.__init__(self)
         self.helper = Adaptor()
         self.name = name
-        self.fn = fn
-        ###
-        from player import RandomPlayer
-        self.random_player = RandomPlayer()
-        self.random_player.record = self.record
-        ###
         AIPlayer2.fns[name] = fn
         for v_dim, h_dim in AIPlayer2.shapes:
             key = (name, v_dim, h_dim)
@@ -69,15 +63,8 @@ class AIPlayer2(Player):
         v = self.helper.s2v(state, [])
         face = random.choice(["Day", "Night"]) # [[API_CALL, *args, *res, is_valid]]
         return face
-    
-    def _send_move(self, state, record, hand, asked, start_turn=0):
-        assert type(start_turn) == int and 18 >= start_turn >= 0
-        if start_turn < 1 or (record and record[-1][0] >= start_turn):
-            return self.__send_move(state, record, hand, asked)
-        else:
-            return self.random_player._send_move(state, record, hand, asked)
 
-    def __send_move(self, state, record, hand, asked):
+    def _send_move(self, state, record, hand, asked):
         if not asked:
             v = self.helper.s2v(state, record) # shape (19 * n + 6, 7)
             h = self.helper.h2v(hand)

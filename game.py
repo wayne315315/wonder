@@ -632,7 +632,7 @@ class Game:
             for i, name, face in zip(range(self.n), self.civs, self.faces)
         ]
 
-    def run(self, verbose=logging.INFO):
+    def rehearse(self, turn, verbose=logging.INFO):
         # set the logger
         self.logger.setLevel(verbose)
         # check if all players are registered
@@ -640,7 +640,7 @@ class Game:
         # initialize the game
         self.init()
         # routine
-        while self.turn <= 18:
+        while self.turn <= turn:
             ### distribute cards in the beginning of each age
             if self.turn % 6 == 1:
                 # send age notice to all players
@@ -695,6 +695,8 @@ class Game:
             # go to next turn
             self.turn += 1
 
+    def run(self, verbose=logging.INFO):
+        self.rehearse(turn=18, verbose=verbose)
         # Calculate score
         scores = self.calculate(last=True)
         # Show score

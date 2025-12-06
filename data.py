@@ -1,6 +1,8 @@
 import random
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
+from multiprocessing import cpu_count
 from collections import defaultdict
+from functools import partial
 
 import numpy as np
 import tensorflow as tf
@@ -120,8 +122,13 @@ def epi_gen(game, gamma=0.9, penalty=-1.0):
     vs, hs, ys, rs, ss = translate(episode, gamma=gamma, penalty=penalty)
     return vs, hs, ys, rs, ss
 
+def rehearse(g, turn):
+    g.rehearse(turn=turn, verbose=50)
+    g.unregister()
+    return g
 
-def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0):
+
+def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, start_turn=0):
     """ Generate data for training/evaluation
     Args:
         num_game: The number of games for each number of the total players
@@ -140,6 +147,17 @@ def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9
 
     # Create all games
     games = [Game(n, random_face=False) for n in range(3, 8) for _ in range(num_game)]
+    # Rehearse with random layers before start turn with multi-processing
+    for game in games:
+        players = [RandomPlayer() for _ in range(game.n)]
+        for i in range(game.n):
+            game.register(i, players[i])
+    rehearse_fn = partial(rehearse, turn=start_turn)
+    with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
+        games = list(tqdm(executor.map(rehearse_fn, games)))
+
+
+    # Register real players
     AIPlayer2.batch_size = num_game
     for game in games:
         players = [AIPlayer2("model", fn_model)] + [AIPlayer2("other", fn) if fn else RandomPlayer() for fn in random.choices(fn_others, weights=w_others, k=game.n-1)]
@@ -153,8 +171,8 @@ def data_gen(num_game, fn_model=None, fn_others=[None], w_others=None, gamma=0.9
             vs, hs, ys, rs, ss = f.result()
             yield (vs, hs, ys, rs, ss)
 
-def write_data(p_data, num_game, fn_model, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, batch_size=4096):
-    data_iterator = data_gen(num_game, fn_model=fn_model, fn_others=fn_others, w_others=w_others, gamma=gamma, penalty=penalty)
+def write_data(p_data, num_game, fn_model, fn_others=[None], w_others=None, gamma=0.9, penalty=-1.0, batch_size=4096, start_turn=0):
+    data_iterator = data_gen(num_game, fn_model=fn_model, fn_others=fn_others, w_others=w_others, gamma=gamma, penalty=penalty, start_turn=start_turn)
     vs = defaultdict(list)
     hs = defaultdict(list)
     ys = defaultdict(list)

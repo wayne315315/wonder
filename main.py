@@ -5,7 +5,7 @@ from ftp import RayFTPClient
 
 
 # master node generate data
-def master(p_data, p_model, p_other="", num_game=10, policy="mixed_float16"):
+def master(p_data, p_model, p_other="", num_game=10, policy="mixed_float16", start_turn=0):
     import tensorflow as tf
     from tensorflow.keras import mixed_precision
     from model import ActorCritic
@@ -50,7 +50,7 @@ def master(p_data, p_model, p_other="", num_game=10, policy="mixed_float16"):
     else:
         fn_other = None
     # write TFRecord
-    write_data(p_data, num_game, fn_model, fn_others=[fn_other, None])
+    write_data(p_data, num_game, fn_model, fn_others=[fn_other, None], start_turn=start_turn)
     # upload data to FTP server
     t3 = time.time()
     with RayFTPClient() as ftp:
@@ -98,7 +98,7 @@ def worker(p_data, p_model, p_optimizer, policy="mixed_float16", epoch=10, batch
     print(f"Worker took: {t2 - t1} seconds")
 
 
-def main(p_model, p_other="model_float16/base.keras", policy="mixed_float16", num_game=10, epoch=10, round=100, batch_size=128, learning_rate=1e-4):
+def main(p_model, p_other="model_float16/base.keras", policy="mixed_float16", num_game=10, epoch=10, round=100, batch_size=128, learning_rate=1e-4, start_turn=0):
     # initialize ray
     ray.init(
         address='auto', 
@@ -113,7 +113,7 @@ def main(p_model, p_other="model_float16/base.keras", policy="mixed_float16", nu
     for r in range(round):
         while True:
             try:
-                master(p_data, p_model, p_other=p_other, policy=policy, num_game=num_game)
+                master(p_data, p_model, p_other=p_other, policy=policy, num_game=num_game, start_turn=start_turn)
             except Exception as e:
                 print(f"Error in master: {e}, retrying...")
             else:
@@ -140,5 +140,6 @@ if __name__ == "__main__":
     parser.add_argument("--round", type=int, default=100)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--learning_rate", type=float, default=1e-4)
+    parser.add_argument("--start_turn", type=int, default=0)
     args = parser.parse_args()
-    main(args.model, p_other=args.other, policy=args.policy, num_game=args.num_game, epoch=args.epoch, round=args.round, batch_size=args.batch_size, learning_rate=args.learning_rate)
+    main(args.model, p_other=args.other, policy=args.policy, num_game=args.num_game, epoch=args.epoch, round=args.round, batch_size=args.batch_size, learning_rate=args.learning_rate, start_turn=args.start_turn)
